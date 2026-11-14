@@ -71,8 +71,39 @@ export function sanitizeFileName(name: string, fallback = "presentation"): strin
   return clean || fallback;
 }
 
+/**
+ * Asset names end up inside Markdown image destinations, so whitespace and
+ * URL-significant characters are replaced with dashes. Otherwise a picture
+ * called "my photo.png" would produce `![](assets/my photo.png)`, which is not
+ * a valid Markdown link.
+ */
+export function sanitizeAssetName(name: string): string {
+  const clean = sanitizeFileName(name, "image");
+  const dot = clean.lastIndexOf(".");
+  const base = dot > 0 ? clean.slice(0, dot) : clean;
+  const ext = dot > 0 ? clean.slice(dot) : "";
+  const safe = base
+    .replace(/[\s#%]+/g, "-")
+    .replace(/[()[\]]/g, "-")
+    .replace(/-+/g, "-")
+    .replace(/^[-.]+|[-.]+$/g, "");
+  return `${safe || "image"}${ext}`;
+}
+
+/** Percent-encodes each path segment so the reference is valid Markdown. */
+export function encodeAssetPath(path: string): string {
+  return path
+    .split("/")
+    .map((segment) =>
+      encodeURIComponent(segment).replace(/[()]/g, (char) =>
+        char === "(" ? "%28" : "%29",
+      ),
+    )
+    .join("/");
+}
+
 export function uniqueAssetPath(existing: Map<string, unknown>, fileName: string): string {
-  const safe = sanitizeFileName(fileName, "image");
+  const safe = sanitizeAssetName(fileName);
   const dot = safe.lastIndexOf(".");
   const base = dot > 0 ? safe.slice(0, dot) : safe;
   const ext = dot > 0 ? safe.slice(dot) : "";

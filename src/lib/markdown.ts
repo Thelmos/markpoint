@@ -12,6 +12,7 @@ export type { SrcResolver } from "./layout";
 
 interface RenderEnv {
   backgrounds: BackgroundImage[];
+  floats: string[];
   resolve: SrcResolver;
   [key: string]: unknown;
 }
@@ -76,7 +77,17 @@ md.renderer.rules.image = (tokens, idx, options, env, self) => {
     return `<img src="${escapeAttr(src)}" alt="${escapeAttr(alt)}"${title ? ` title="${escapeAttr(title)}"` : ""}>`;
   }
 
-  return `<img src="${escapeAttr(src)}" alt="" class="slide-img slide-img-${spec.kind}" style="width:${spec.width}%">`;
+  // Layout images are sized by a CSS variable: the percentage defines a square
+  // bounding box, so the picture keeps its aspect ratio without letterboxing.
+  const sized = `<img src="${escapeAttr(src)}" alt="" class="slide-img slide-img-${spec.kind}" style="--img-size:${spec.width}">`;
+
+  if (spec.kind === "center") return sized;
+
+  // Left/right images float. Hoisting them to the top of the content (see
+  // renderSlideMarkdown) lets the following text wrap around them and keep
+  // flowing below, instead of being pushed past the image.
+  renderEnv.floats.push(sized);
+  return `<span class="layout-marker" aria-hidden="true"></span>`;
 };
 
 const defaultLinkOpen = md.renderer.rules.link_open;
@@ -91,12 +102,22 @@ md.renderer.rules.link_open = (tokens, idx, options, env, self) => {
     : self.renderToken(tokens, idx, options);
 };
 
-/** Renders slide markdown, extracting background images along the way. */
+/** Renders slide markdown, extracting background and floating images. */
 export function renderSlideMarkdown(markdown: string, resolve: SrcResolver): SlideRender {
-  const env: RenderEnv = { backgrounds: [], resolve };
+  const env: RenderEnv = { backgrounds: [], floats: [], resolve };
   let html = md.render(markdown, env as unknown as Record<string, unknown>);
   html = html.replace(/<p>\s*<span class="layout-marker"[^>]*><\/span>\s*<\/p>/g, "");
   html = html.replace(/<p>\s*<\/p>/g, "");
+  html = html.replace(/<span class="layout-marker"[^>]*><\/span>/g, "");
+
+  if (env.floats.length > 0) {
+    // Floats are anchored to the top of the slide so all the text can wrap
+    // around them and keep flowing to the bottom. Placed where they appear in
+    // the source, an image at the end would sit below the text and force the
+    // auto-fit to shrink everything.
+    html = env.floats.join("") + html;
+  }
+
   return { html, backgrounds: env.backgrounds };
 }
 
