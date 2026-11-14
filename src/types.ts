@@ -54,4 +54,6 @@ export interface ProjectData {
 export interface SlideRender {
   html: string;
   backgrounds: BackgroundImage[];
+  /** True when the content is split into a leading title and a body block. */
+  hasBody: boolean;
 }

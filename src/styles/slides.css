@@ -69,9 +69,42 @@
   margin-top: 0 !important;
 }
 
-/* The hoisted float sits above the first block; keep that block flush with the
-   top so the image can use the full content height. */
+/* A float that is not inside a title/body split starts at the top edge; keep
+   the first block flush with it. */
 .slide-content > .slide-img + * {
+  margin-top: 0 !important;
+}
+
+/* When a slide starts with a title and has floating images, the title keeps the
+   full width and the rest lives in a body block that fills the remaining space.
+   The float can then size itself against that body instead of the whole slide. */
+.slide-content.has-body {
+  display: flex;
+  flex-direction: column;
+}
+
+.slide-body {
+  position: relative;
+  z-index: 1;
+  flex: 1;
+  min-height: 0;
+}
+
+.slide-body::after {
+  content: "";
+  display: block;
+  clear: both;
+}
+
+.slide-body > :first-child {
+  margin-top: 0 !important;
+}
+
+.slide-body > :last-child {
+  margin-bottom: 0 !important;
+}
+
+.slide-content .slide-body > .slide-img + * {
   margin-top: 0 !important;
 }
 
@@ -356,11 +389,28 @@
   );
 }
 
+/* Inside the body block the available height is already the space left below
+   the slide title. */
+.slide-content .slide-body .slide-img-left,
+.slide-content .slide-body .slide-img-right {
+  max-height: min(
+    calc(var(--slide-content-width) * var(--img-size) / 100),
+    calc(100% - 16px)
+  );
+}
+
 /* Centred images sit in the flow, so they must leave room for the text below. */
 .slide-content .slide-img-center {
   max-height: min(
     calc(var(--slide-content-width) * var(--img-size) / 100),
     calc(var(--slide-content-height) * 0.7)
+  );
+}
+
+.slide-content .slide-body .slide-img-center {
+  max-height: min(
+    calc(var(--slide-content-width) * var(--img-size) / 100),
+    70%
   );
 }
 

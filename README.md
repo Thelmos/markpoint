@@ -85,7 +85,7 @@ La posición se define en el **texto alternativo** de la imagen, de modo que el 
 - Las rutas son relativas al proyecto (normalmente `assets/...`).
 - Se puede arrastrar y soltar una imagen sobre la ventana para copiarla al proyecto e insertarla en el cursor. Los nombres se sanean (espacios y caracteres especiales pasan a `-`) para que la referencia sea Markdown válido.
 - El porcentaje limita el tamaño respecto al área de contenido: las imágenes apaisadas crecen en ancho y las verticales en alto, sin deformarse ni dejar franjas.
-- Las imágenes `left` y `right` se anclan a la parte superior de la diapositiva; el texto fluye a su lado y continúa a todo el ancho por debajo de ellas.
+- Las imágenes `left` y `right` se anclan debajo del título de la diapositiva: el título se dibuja a todo el ancho y, después, el texto fluye al lado de la imagen y continúa a todo el ancho por debajo de ella.
 - El fondo lleva un velo automático según el tema para mantener la legibilidad del texto.
 - Al guardar se eliminan del `.markpoint` las imágenes que ya no se referencian en el Markdown, para liberar espacio. Se conservan en memoria durante la sesión.
 

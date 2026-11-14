@@ -111,14 +111,19 @@ export function renderSlideMarkdown(markdown: string, resolve: SrcResolver): Sli
   html = html.replace(/<span class="layout-marker"[^>]*><\/span>/g, "");
 
   if (env.floats.length > 0) {
-    // Floats are anchored to the top of the slide so all the text can wrap
-    // around them and keep flowing to the bottom. Placed where they appear in
-    // the source, an image at the end would sit below the text and force the
-    // auto-fit to shrink everything.
-    html = env.floats.join("") + html;
+    const floats = env.floats.join("");
+    // The slide title stays full width (with its separator); the floating
+    // image only shares space with the content below it.
+    const heading = /^\s*(<h[1-6](?:\s[^>]*)?>[\s\S]*?<\/h[1-6]>)/i.exec(html);
+    if (heading) {
+      html = `${heading[1]}<div class="slide-body">${floats}${html.slice(heading[0].length)}</div>`;
+      return { html, backgrounds: env.backgrounds, hasBody: true };
+    }
+    // No leading heading: the image floats from the top of the slide.
+    html = floats + html;
   }
 
-  return { html, backgrounds: env.backgrounds };
+  return { html, backgrounds: env.backgrounds, hasBody: false };
 }
 
 export function cssUrl(src: string): string {
@@ -133,7 +138,7 @@ export interface SlideMarkupOptions {
 }
 
 export function slideMarkup(slide: Slide, options: SlideMarkupOptions): string {
-  const { html, backgrounds } = renderSlideMarkdown(slide.markdown, options.resolve);
+  const { html, backgrounds, hasBody } = renderSlideMarkdown(slide.markdown, options.resolve);
   const layers = backgrounds
     .map(
       (bg) =>
@@ -143,7 +148,8 @@ export function slideMarkup(slide: Slide, options: SlideMarkupOptions): string {
   const page = options.showPageNumber
     ? `<div class="slide-number">${options.index + 1}</div>`
     : "";
-  return `<section class="slide" data-theme="${options.theme}">${layers}<div class="slide-content">${html}</div>${page}</section>`;
+  const content = hasBody ? "slide-content has-body" : "slide-content";
+  return `<section class="slide" data-theme="${options.theme}">${layers}<div class="${content}">${html}</div>${page}</section>`;
 }
 
 /** Parses a markdown image path so callers can look it up in the bundle. */
