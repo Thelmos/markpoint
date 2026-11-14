@@ -1,0 +1,94 @@
+/* Standalone HTML export (one self-contained file). */
+
+html,
+body {
+  height: 100%;
+  margin: 0;
+  padding: 0;
+  overflow: hidden;
+  background: #04060a;
+  font-family: "Segoe UI", system-ui, sans-serif;
+}
+
+.deck {
+  position: fixed;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.export-slide {
+  position: absolute;
+  width: 1280px;
+  height: 720px;
+  overflow: hidden;
+  display: none;
+}
+
+.export-slide.is-active {
+  display: block;
+}
+
+.export-slide > .slide {
+  width: 1280px;
+  height: 720px;
+  transform-origin: top left;
+}
+
+.mp-progress {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 3px;
+  background: rgba(255, 255, 255, 0.12);
+  z-index: 20;
+}
+
+.mp-progress > span {
+  display: block;
+  width: 0;
+  height: 100%;
+  background: linear-gradient(90deg, #6ea8ff, #a78bfa);
+  transition: width 0.25s ease;
+}
+
+.mp-counter {
+  position: fixed;
+  right: 18px;
+  bottom: 16px;
+  z-index: 20;
+  padding: 6px 11px;
+  border-radius: 999px;
+  background: rgba(8, 12, 20, 0.6);
+  color: #cbd5e1;
+  font: 12px/1.2 "Segoe UI", system-ui, sans-serif;
+  letter-spacing: 0.02em;
+}
+
+.mp-hint {
+  position: fixed;
+  left: 18px;
+  bottom: 16px;
+  z-index: 20;
+  color: #64748b;
+  font: 11px/1.2 "Segoe UI", system-ui, sans-serif;
+}
+
+@media (max-width: 700px) {
+  .mp-hint {
+    display: none;
+  }
+}
+
+@media print {
+  .mp-progress,
+  .mp-counter,
+  .mp-hint {
+    display: none !important;
+  }
+  .export-slide {
+    display: block;
+  }
+}

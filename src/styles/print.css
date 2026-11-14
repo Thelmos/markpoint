@@ -1,0 +1,45 @@
+/* Print / PDF export: one 16:9 page per slide, no margins. */
+
+@page {
+  size: 13.333333in 7.5in;
+  margin: 0;
+}
+
+html,
+body {
+  margin: 0;
+  padding: 0;
+  background: #ffffff;
+}
+
+* {
+  -webkit-print-color-adjust: exact !important;
+  print-color-adjust: exact !important;
+}
+
+.print-deck {
+  margin: 0;
+  padding: 0;
+}
+
+.export-slide {
+  position: relative;
+  display: block;
+  width: 1280px;
+  height: 720px;
+  overflow: hidden;
+  page-break-after: always;
+  break-after: page;
+}
+
+.export-slide:last-child {
+  page-break-after: auto;
+  break-after: auto;
+}
+
+.export-slide > .slide {
+  width: 1280px;
+  height: 720px;
+  transform: none !important;
+  box-shadow: none !important;
+}
