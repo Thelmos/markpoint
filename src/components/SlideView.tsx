@@ -35,7 +35,7 @@ export function SlideView({
     () =>
       active
         ? renderSlideMarkdown(slide.markdown, resolve)
-        : { html: "", backgrounds: [] },
+        : { html: "", backgrounds: [], hasBody: false },
     // Theme is included because cached blob URLs may change with it.
     [active, slide.markdown, resolve, theme],
   );
@@ -123,7 +123,7 @@ export function SlideView({
         : null}
       {active ? (
         <div
-          className="slide-content"
+          className={rendered.hasBody ? "slide-content has-body" : "slide-content"}
           dangerouslySetInnerHTML={{ __html: rendered.html }}
         />
       ) : null}

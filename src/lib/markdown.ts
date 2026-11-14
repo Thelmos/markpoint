@@ -12,6 +12,7 @@ export type { SrcResolver } from "./layout";
 
 interface RenderEnv {
   backgrounds: BackgroundImage[];
+  floats: string[];
   resolve: SrcResolver;
   [key: string]: unknown;
 }
@@ -76,7 +77,17 @@ md.renderer.rules.image = (tokens, idx, options, env, self) => {
     return `<img src="${escapeAttr(src)}" alt="${escapeAttr(alt)}"${title ? ` title="${escapeAttr(title)}"` : ""}>`;
   }
 
-  return `<img src="${escapeAttr(src)}" alt="" class="slide-img slide-img-${spec.kind}" style="width:${spec.width}%">`;
+  // Layout images are sized by a CSS variable: the percentage defines a square
+  // bounding box, so the picture keeps its aspect ratio without letterboxing.
+  const sized = `<img src="${escapeAttr(src)}" alt="" class="slide-img slide-img-${spec.kind}" style="--img-size:${spec.width}">`;
+
+  if (spec.kind === "center") return sized;
+
+  // Left/right images float. Hoisting them to the top of the content (see
+  // renderSlideMarkdown) lets the following text wrap around them and keep
+  // flowing below, instead of being pushed past the image.
+  renderEnv.floats.push(sized);
+  return `<span class="layout-marker" aria-hidden="true"></span>`;
 };
 
 const defaultLinkOpen = md.renderer.rules.link_open;
@@ -91,13 +102,28 @@ md.renderer.rules.link_open = (tokens, idx, options, env, self) => {
     : self.renderToken(tokens, idx, options);
 };
 
-/** Renders slide markdown, extracting background images along the way. */
+/** Renders slide markdown, extracting background and floating images. */
 export function renderSlideMarkdown(markdown: string, resolve: SrcResolver): SlideRender {
-  const env: RenderEnv = { backgrounds: [], resolve };
+  const env: RenderEnv = { backgrounds: [], floats: [], resolve };
   let html = md.render(markdown, env as unknown as Record<string, unknown>);
   html = html.replace(/<p>\s*<span class="layout-marker"[^>]*><\/span>\s*<\/p>/g, "");
   html = html.replace(/<p>\s*<\/p>/g, "");
-  return { html, backgrounds: env.backgrounds };
+  html = html.replace(/<span class="layout-marker"[^>]*><\/span>/g, "");
+
+  if (env.floats.length > 0) {
+    const floats = env.floats.join("");
+    // The slide title stays full width (with its separator); the floating
+    // image only shares space with the content below it.
+    const heading = /^\s*(<h[1-6](?:\s[^>]*)?>[\s\S]*?<\/h[1-6]>)/i.exec(html);
+    if (heading) {
+      html = `${heading[1]}<div class="slide-body">${floats}${html.slice(heading[0].length)}</div>`;
+      return { html, backgrounds: env.backgrounds, hasBody: true };
+    }
+    // No leading heading: the image floats from the top of the slide.
+    html = floats + html;
+  }
+
+  return { html, backgrounds: env.backgrounds, hasBody: false };
 }
 
 export function cssUrl(src: string): string {
@@ -112,7 +138,7 @@ export interface SlideMarkupOptions {
 }
 
 export function slideMarkup(slide: Slide, options: SlideMarkupOptions): string {
-  const { html, backgrounds } = renderSlideMarkdown(slide.markdown, options.resolve);
+  const { html, backgrounds, hasBody } = renderSlideMarkdown(slide.markdown, options.resolve);
   const layers = backgrounds
     .map(
       (bg) =>
@@ -122,7 +148,8 @@ export function slideMarkup(slide: Slide, options: SlideMarkupOptions): string {
   const page = options.showPageNumber
     ? `<div class="slide-number">${options.index + 1}</div>`
     : "";
-  return `<section class="slide" data-theme="${options.theme}">${layers}<div class="slide-content">${html}</div>${page}</section>`;
+  const content = hasBody ? "slide-content has-body" : "slide-content";
+  return `<section class="slide" data-theme="${options.theme}">${layers}<div class="${content}">${html}</div>${page}</section>`;
 }
 
 /** Parses a markdown image path so callers can look it up in the bundle. */

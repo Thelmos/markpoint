@@ -15,6 +15,8 @@
   font-family: var(--slide-font);
   font-synthesis: none;
   text-rendering: optimizeLegibility;
+  --slide-content-height: calc(720px - 2 * var(--slide-pad-y));
+  --slide-content-width: calc(1280px - 2 * var(--slide-pad-x));
 }
 
 .slide *,
@@ -65,6 +67,52 @@
 
 .slide-content > :first-child {
   margin-top: 0 !important;
+}
+
+/* A float that is not inside a title/body split starts at the top edge; keep
+   the first block flush with it. */
+.slide-content > .slide-img + * {
+  margin-top: 0 !important;
+}
+
+/* When a slide starts with a title and has floating images, the title keeps the
+   full width and the rest lives in a body block that fills the remaining space.
+   The float can then size itself against that body instead of the whole slide. */
+.slide-content.has-body {
+  display: flex;
+  flex-direction: column;
+}
+
+.slide-body {
+  position: relative;
+  z-index: 1;
+  flex: 1;
+  min-height: 0;
+}
+
+.slide-body::after {
+  content: "";
+  display: block;
+  clear: both;
+}
+
+.slide-body > :first-child {
+  margin-top: 0 !important;
+}
+
+.slide-body > :last-child {
+  margin-bottom: 0 !important;
+}
+
+.slide-content .slide-body > .slide-img + * {
+  margin-top: 0 !important;
+}
+
+/* With a left float, outside list markers are painted over the image. Moving
+   them inside the (shortened) line box keeps them clear. Right floats don't
+   need this, so the normal hanging indent is preserved there. */
+.slide-content:has(.slide-img-left) :is(ul, ol) {
+  list-style-position: inside;
 }
 
 .slide-content > :last-child {
@@ -314,7 +362,6 @@
 .slide-content img {
   max-width: 100%;
   max-height: 380px;
-  object-fit: contain;
   border-radius: 0.3em;
 }
 
@@ -323,21 +370,65 @@
   margin: 0.3em auto;
 }
 
-.slide-img {
+/* Layout images: the percentage is a square bounding box measured against the
+   content width, capped by the slide height. Landscape pictures keep their old
+   width; portrait ones grow with the number instead of being letterboxed. */
+.slide-content .slide-img {
+  --img-size: 38;
+  width: auto;
   height: auto;
-  max-height: 420px;
+  max-width: calc(var(--slide-content-width) * var(--img-size) / 100);
+  max-height: min(
+    calc(var(--slide-content-width) * var(--img-size) / 100),
+    var(--slide-content-height)
+  );
   border: 0;
   box-shadow: 0 14px 38px rgba(0, 0, 0, 0.22);
 }
 
+/* Floats carry a 2px top and 14px bottom margin, so their box must leave room
+   for it or a full-height image would push the auto-fit to the minimum size. */
+.slide-content .slide-img-left,
+.slide-content .slide-img-right {
+  max-height: min(
+    calc(var(--slide-content-width) * var(--img-size) / 100),
+    calc(var(--slide-content-height) - 16px)
+  );
+}
+
+/* Inside the body block the available height is already the space left below
+   the slide title. */
+.slide-content .slide-body .slide-img-left,
+.slide-content .slide-body .slide-img-right {
+  max-height: min(
+    calc(var(--slide-content-width) * var(--img-size) / 100),
+    calc(100% - 16px)
+  );
+}
+
+/* Centred images sit in the flow, so they must leave room for the text below. */
+.slide-content .slide-img-center {
+  max-height: min(
+    calc(var(--slide-content-width) * var(--img-size) / 100),
+    calc(var(--slide-content-height) * 0.7)
+  );
+}
+
+.slide-content .slide-body .slide-img-center {
+  max-height: min(
+    calc(var(--slide-content-width) * var(--img-size) / 100),
+    70%
+  );
+}
+
 .slide-img-left {
   float: left;
-  margin: 0.2em 1.1em 0.55em 0;
+  margin: 2px 22px 14px 0;
 }
 
 .slide-img-right {
   float: right;
-  margin: 0.2em 0 0.55em 1.1em;
+  margin: 2px 0 14px 22px;
 }
 
 .slide-img-center {

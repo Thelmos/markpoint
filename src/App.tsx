@@ -5,12 +5,19 @@ import { deckTitle, lineForSlide, parseDeck, slideAtLine } from "./lib/parser";
 import { normalizeAssetPath } from "./lib/markdown";
 import {
   bytesToBlobUrl,
+  encodeAssetPath,
   fileToDataUrl,
+  formatBytes,
   isImagePath,
   sanitizeFileName,
   textToBytes,
 } from "./lib/assets";
-import { hasMarkpointExtension, readProject, writeProject } from "./lib/project";
+import {
+  hasMarkpointExtension,
+  readProject,
+  unreferencedImages,
+  writeProject,
+} from "./lib/project";
 import {
   basename,
   confirmDialog,
@@ -320,6 +327,11 @@ export default function App() {
           target = await pickSavePath(suggested, "MarkPoint", ["markpoint"]);
           if (!target) return;
         }
+        const pruned = unreferencedImages(state.files, state.markdown);
+        const freed = pruned.reduce(
+          (total, path) => total + (state.files.get(path)?.byteLength ?? 0),
+          0,
+        );
         const bytes = writeProject({
           markdownPath: state.markdownPath,
           markdown: state.markdown,
@@ -340,6 +352,14 @@ export default function App() {
           );
         }
         pushToast(translate(state.lang, "saved"), "success");
+        if (pruned.length > 0) {
+          pushToast(
+            translate(state.lang, "imagesPruned", {
+              n: pruned.length,
+              size: formatBytes(freed),
+            }),
+          );
+        }
       } catch (error) {
         await showError(t("saveError"), error instanceof Error ? error.message : String(error));
       }
@@ -424,7 +444,7 @@ export default function App() {
       for (const image of images) {
         paths.push(state.addFile(image.name, image.bytes));
       }
-      const snippet = paths.map((path) => `![](${path})`).join("\n\n");
+      const snippet = paths.map((path) => `![](${encodeAssetPath(path)})`).join("\n\n");
       editorRef.current?.insertText(`\n\n${snippet}\n\n`);
       pushToast(
         images.length === 1

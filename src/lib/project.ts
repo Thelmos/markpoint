@@ -1,6 +1,6 @@
 import { unzipSync, zipSync } from "fflate";
 import type { Manifest, ProjectData, ThemeId } from "../types";
-import { bytesToText, extensionOf, textToBytes } from "./assets";
+import { bytesToText, extensionOf, isImagePath, textToBytes } from "./assets";
 import { deckTitle, parseDeck } from "./parser";
 
 export const MANIFEST_FILE = "manifest.json";
@@ -36,6 +36,55 @@ function looksLikeZip(bytes: Uint8Array): boolean {
 
 function normalizePath(path: string): string {
   return path.replace(/\\/g, "/").replace(/^\.\//, "").replace(/^\/+/, "");
+}
+
+function pathVariants(path: string): string[] {
+  const variants = new Set<string>([path]);
+  const name = path.split("/").pop();
+  if (name) variants.add(name);
+  try {
+    const decoded = decodeURIComponent(path);
+    variants.add(decoded);
+    const decodedName = decoded.split("/").pop();
+    if (decodedName) variants.add(decodedName);
+  } catch {
+    /* keep the raw path */
+  }
+  try {
+    variants.add(encodeURI(path));
+  } catch {
+    /* keep the raw path */
+  }
+  return Array.from(variants).filter(Boolean);
+}
+
+/**
+ * Checks whether the markdown still points at a bundle file. It is deliberately
+ * lenient (raw, decoded and percent-encoded forms, plus the file name), so a
+ * reference this function does not understand is kept instead of deleted.
+ */
+export function isAssetReferenced(markdown: string, path: string): boolean {
+  const documents = [markdown];
+  try {
+    const decoded = decodeURIComponent(markdown);
+    if (decoded !== markdown) documents.push(decoded);
+  } catch {
+    /* malformed escapes: compare the raw text only */
+  }
+  const variants = pathVariants(path);
+  return documents.some((doc) => variants.some((variant) => doc.includes(variant)));
+}
+
+/** Images stored in the bundle that the markdown no longer references. */
+export function unreferencedImages(
+  files: Map<string, Uint8Array>,
+  markdown: string,
+): string[] {
+  const found: string[] = [];
+  for (const path of files.keys()) {
+    if (isImagePath(path) && !isAssetReferenced(markdown, path)) found.push(path);
+  }
+  return found;
 }
 
 /** Reads either a .markpoint bundle or a plain markdown file. */
@@ -117,6 +166,8 @@ export function writeProject(project: ProjectData): Uint8Array {
 
   for (const [path, data] of project.files) {
     if (path === MANIFEST_FILE || path === project.markdownPath) continue;
+    // Images that are no longer referenced would only make the bundle bigger.
+    if (isImagePath(path) && !isAssetReferenced(project.markdown, path)) continue;
     const ext = extensionOf(path);
     const alreadyCompressed = ["png", "jpg", "jpeg", "gif", "webp", "avif", "mp4", "webm", "woff2", "zip"].includes(ext);
     entries[normalizePath(path)] = [data, { level: alreadyCompressed ? 0 : 6 }];
