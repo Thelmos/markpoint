@@ -108,6 +108,13 @@
   margin-top: 0 !important;
 }
 
+/* With a left float, outside list markers are painted over the image. Moving
+   them inside the (shortened) line box keeps them clear. Right floats don't
+   need this, so the normal hanging indent is preserved there. */
+.slide-content:has(.slide-img-left) :is(ul, ol) {
+  list-style-position: inside;
+}
+
 .slide-content > :last-child {
   margin-bottom: 0 !important;
 }
