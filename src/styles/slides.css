@@ -13,7 +13,9 @@
   background: var(--slide-bg);
   color: var(--slide-fg);
   font-family: var(--slide-font);
-  font-synthesis: none;
+  /* The slide fonts have no italic face. Allow synthesised obliques, but keep
+     synthetic bold disabled so headings keep using the real weight. */
+  font-synthesis: style;
   text-rendering: optimizeLegibility;
   --slide-content-height: calc(720px - 2 * var(--slide-pad-y));
   --slide-content-width: calc(1280px - 2 * var(--slide-pad-x));
