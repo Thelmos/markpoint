@@ -63,6 +63,7 @@ import { Toolbar, type ExportKind } from "./components/Toolbar";
 import { Presentation } from "./components/Presentation";
 import { Presenter } from "./components/Presenter";
 import { BusyOverlay, ToastStack, type ToastItem } from "./components/Overlays";
+import { HelpDialog } from "./components/HelpDialog";
 import { Icon } from "./components/Icons";
 
 function clamp(value: number, min: number, max: number): number {
@@ -114,6 +115,7 @@ export default function App() {
   const [dragActive, setDragActive] = useState(false);
   const dragDepth = useRef(0);
   const [recent, setRecent] = useState<RecentFile[]>(() => loadRecent());
+  const [helpOpen, setHelpOpen] = useState(false);
 
   const [session, setSession] = useState<{ mode: "overlay" | "presenter"; start: number } | null>(
     null,
@@ -898,7 +900,7 @@ export default function App() {
 
   useEffect(() => {
     const handler = (event: KeyboardEvent) => {
-      if (session || busy) return;
+      if (session || busy || helpOpen) return;
       const mod = event.ctrlKey || event.metaKey;
       if (mod && !event.altKey) {
         const key = event.key.toLowerCase();
@@ -921,7 +923,7 @@ export default function App() {
     };
     window.addEventListener("keydown", handler);
     return () => window.removeEventListener("keydown", handler);
-  }, [session, busy, saveProject, openProject, newPresentation, startPresentation]);
+  }, [session, busy, helpOpen, saveProject, openProject, newPresentation, startPresentation]);
 
   useEffect(() => {
     const guard = onCloseRequested(async () => {
@@ -1066,15 +1068,13 @@ export default function App() {
         onInsertSlide={insertSlide}
         onExport={(kind) => void exportDeck(kind)}
         onPresent={() => void startPresentation()}
+        onHelp={() => setHelpOpen(true)}
       />
 
       <div className="workspace" ref={workspaceRef}>
         <section className="pane editor-pane" style={{ width: `${editorWidth}%`, flex: "0 0 auto" }}>
           <div className="pane-header">
             <span>{t("editor")}</span>
-            <span className="hint" title={t("layoutHelp")}>
-              {t("layoutHelp")}
-            </span>
           </div>
           <EditorPane
             ref={editorRef}
@@ -1141,6 +1141,7 @@ export default function App() {
       </footer>
 
       <ToastStack items={toasts} />
+      {helpOpen ? <HelpDialog onClose={() => setHelpOpen(false)} /> : null}
       {busy ? <BusyOverlay label={busy} /> : null}
 
       {dragActive ? (
