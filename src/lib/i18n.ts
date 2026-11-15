@@ -114,7 +114,6 @@ const es: Dict = {
   fitMinShort: "mínimo",
   slideChanged: "Diapositiva {n}",
   dropProject: "Suelta un archivo .markpoint para abrirlo",
-  layoutHelp: "![bg](fondo) · ![left:40%](imagen) · ![right](imagen) · ![center:60%](imagen)",
   previewEmpty: "No hay diapositivas todavía",
   loading: "Cargando…",
   more: "Más",
@@ -133,6 +132,38 @@ const es: Dict = {
   contextHeading3: "Título 3",
   imageFilter: "Imágenes",
   imagePickError: "No se pudieron añadir las imágenes",
+  help: "Ayuda",
+  helpTooltip: "Ayuda y sintaxis",
+  helpSubtitle: "Sintaxis esencial del editor",
+  helpSlidesTitle: "Diapositivas y front matter",
+  helpSlidesDesc:
+    "Separa las diapositivas con una línea `---`. El front matter inicial define el título y la numeración.",
+  helpSlidesCode:
+    "---\ntitle: Mi presentación\npaginate: true\n---\n\n# Primera diapositiva\n\n---\n\n# Segunda diapositiva",
+  helpTextTitle: "Texto",
+  helpTextDesc: "Títulos, énfasis y listas:",
+  helpTextCode:
+    "# Título 1\n## Título 2\n**negrita** y *cursiva*\n- elemento de lista\n1. elemento numerado",
+  helpContextDesc:
+    "Selecciona texto y pulsa con el botón derecho para aplicar negrita, cursiva o títulos desde el menú contextual.",
+  helpImagesTitle: "Imágenes",
+  helpImagesDesc:
+    "La posición y el tamaño se indican en el texto alternativo. También puedes arrastrar una imagen o usar el menú contextual → Insertar imagen…",
+  helpImageBackground: "Fondo a pantalla completa",
+  helpImageContain: "Fondo ajustado sin recortar",
+  helpImageLeft: "Flotada a la izquierda, 40 %",
+  helpImageRight: "Flotada a la derecha",
+  helpImageCenter: "Centrada, 60 %",
+  helpImageInline: "Imagen normal en línea",
+  helpNotesTitle: "Notas del orador",
+  helpNotesDesc: "Solo las ve el presentador:",
+  helpNotesCode: "Contenido visible\n\n<!-- notes: Solo lo ve el presentador. -->",
+  helpMoreTitle: "Más Markdown",
+  helpMoreDesc:
+    "También hay tablas GFM, listas de tareas, código resaltado, fórmulas KaTeX, diagramas Mermaid y emojis.",
+  helpShortcutsTitle: "Atajos",
+  helpShortcutsDesc:
+    "Ctrl+S guardar · Ctrl+Shift+S guardar como · Ctrl+O abrir · Ctrl+N nueva presentación · F5 presentar",
 };
 
 const en: Dict = {
@@ -245,7 +276,6 @@ const en: Dict = {
   fitMinShort: "minimum",
   slideChanged: "Slide {n}",
   dropProject: "Drop a .markpoint file to open it",
-  layoutHelp: "![bg](background) · ![left:40%](image) · ![right](image) · ![center:60%](image)",
   previewEmpty: "No slides yet",
   loading: "Loading…",
   more: "More",
@@ -264,6 +294,38 @@ const en: Dict = {
   contextHeading3: "Heading 3",
   imageFilter: "Images",
   imagePickError: "Could not add the images",
+  help: "Help",
+  helpTooltip: "Help and syntax",
+  helpSubtitle: "Essential editor syntax",
+  helpSlidesTitle: "Slides and front matter",
+  helpSlidesDesc:
+    "Separate slides with a `---` line. The initial front matter sets the title and page numbers.",
+  helpSlidesCode:
+    "---\ntitle: My presentation\npaginate: true\n---\n\n# First slide\n\n---\n\n# Second slide",
+  helpTextTitle: "Text",
+  helpTextDesc: "Headings, emphasis and lists:",
+  helpTextCode:
+    "# Heading 1\n## Heading 2\n**bold** and *italic*\n- list item\n1. numbered item",
+  helpContextDesc:
+    "Select text and right-click to apply bold, italic or headings from the context menu.",
+  helpImagesTitle: "Images",
+  helpImagesDesc:
+    "Position and size go in the alt text. You can also drag an image onto the window or use the context menu → Insert image…",
+  helpImageBackground: "Full-screen background",
+  helpImageContain: "Background fitted without cropping",
+  helpImageLeft: "Float left, 40%",
+  helpImageRight: "Float right",
+  helpImageCenter: "Centered, 60%",
+  helpImageInline: "Normal inline image",
+  helpNotesTitle: "Speaker notes",
+  helpNotesDesc: "Only the presenter sees them:",
+  helpNotesCode: "Visible content\n\n<!-- notes: Only the presenter sees this. -->",
+  helpMoreTitle: "More Markdown",
+  helpMoreDesc:
+    "Also GFM tables, task lists, highlighted code, KaTeX formulas, Mermaid diagrams and emojis.",
+  helpShortcutsTitle: "Shortcuts",
+  helpShortcutsDesc:
+    "Ctrl+S save · Ctrl+Shift+S save as · Ctrl+O open · Ctrl+N new presentation · F5 present",
 };
 
 const dictionaries: Record<Lang, Dict> = { es, en };

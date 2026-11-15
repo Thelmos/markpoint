@@ -29,7 +29,8 @@ En Windows el empaquetado se limita a NSIS mediante `src-tauri/tauri.windows.con
 4. `F5` entra en modo presentación. `Espacio` / `→` avanzan, `←` retrocede, `N` muestra notas (modo de un monitor), `T` oculta el temporizador, `P` lo pausa y `Esc` sale.
 5. `Ctrl+S` guarda, `Ctrl+Shift+S` guarda como, `Ctrl+O` abre y `Ctrl+N` crea una presentación.
 6. Al pulsar con el botón derecho sobre el texto del editor aparece un menú contextual: **Insertar imagen…** está siempre disponible; **Negrita**, **Cursiva** y los **títulos 1–3** se activan cuando hay texto seleccionado y aplican el formato a la selección.
-7. El botón del reloj, junto a Abrir, muestra los **archivos recientes**. Los proyectos con archivo se **autoguardan** ~1,2 s después del último cambio; los que aún no tienen ruta guardan una **copia de recuperación** y, al volver a abrir la app, ofrecen restaurarla.
+7. El botón **?** de la barra superior abre una ayuda con la sintaxis esencial del editor: diapositivas, texto, imágenes, notas del orador, Markdown adicional y atajos.
+8. El botón del reloj, junto a Abrir, muestra los **archivos recientes**. Los proyectos con archivo se **autoguardan** ~1,2 s después del último cambio; los que aún no tienen ruta guardan una **copia de recuperación** y, al volver a abrir la app, ofrecen restaurarla.
 
 Al instalar MarkPoint en Windows, los archivos `.markpoint` quedan asociados a la aplicación: se pueden abrir con doble clic. Si la app ya está abierta, la nueva apertura se reenvía a la misma ventana (instancia única).
 

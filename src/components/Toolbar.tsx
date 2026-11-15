@@ -20,6 +20,7 @@ interface ToolbarProps {
   onInsertSlide: () => void;
   onExport: (kind: ExportKind) => void;
   onPresent: () => void;
+  onHelp: () => void;
 }
 
 export function Toolbar({
@@ -34,6 +35,7 @@ export function Toolbar({
   onInsertSlide,
   onExport,
   onPresent,
+  onHelp,
 }: ToolbarProps) {
   const t = useT();
   const title = useAppStore((state) => state.manifest.title);
@@ -179,6 +181,15 @@ export function Toolbar({
           disabled={busy}
         >
           <Icon name="plus" />
+        </button>
+        <button
+          className="btn icon"
+          onClick={onHelp}
+          title={t("helpTooltip")}
+          aria-label={t("help")}
+          disabled={busy}
+        >
+          <Icon name="help" />
         </button>
       </div>
 
