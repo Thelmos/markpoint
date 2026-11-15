@@ -192,6 +192,12 @@ button {
   flex: 1;
 }
 
+.toolbar-actions {
+  display: flex;
+  align-items: center;
+  gap: 18px;
+}
+
 .toolbar-group {
   display: flex;
   align-items: center;
