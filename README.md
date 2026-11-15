@@ -28,7 +28,8 @@ En Windows el empaquetado se limita a NSIS mediante `src-tauri/tauri.windows.con
 3. El panel derecho muestra todas las diapositivas. Al mover el cursor o hacer scroll en el editor, la lista se centra en la diapositiva correspondiente; al hacer scroll o clic en una diapositiva, el editor salta a su línea.
 4. `F5` entra en modo presentación. `Espacio` / `→` avanzan, `←` retrocede, `N` muestra notas (modo de un monitor), `T` oculta el temporizador, `P` lo pausa y `Esc` sale.
 5. `Ctrl+S` guarda, `Ctrl+Shift+S` guarda como, `Ctrl+O` abre y `Ctrl+N` crea una presentación.
-6. El botón del reloj, junto a Abrir, muestra los **archivos recientes**. Los proyectos con archivo se **autoguardan** ~1,2 s después del último cambio; los que aún no tienen ruta guardan una **copia de recuperación** y, al volver a abrir la app, ofrecen restaurarla.
+6. Al pulsar con el botón derecho sobre el texto del editor aparece un menú contextual: **Insertar imagen…** está siempre disponible; **Negrita**, **Cursiva** y los **títulos 1–3** se activan cuando hay texto seleccionado y aplican el formato a la selección.
+7. El botón del reloj, junto a Abrir, muestra los **archivos recientes**. Los proyectos con archivo se **autoguardan** ~1,2 s después del último cambio; los que aún no tienen ruta guardan una **copia de recuperación** y, al volver a abrir la app, ofrecen restaurarla.
 
 Al instalar MarkPoint en Windows, los archivos `.markpoint` quedan asociados a la aplicación: se pueden abrir con doble clic. Si la app ya está abierta, la nueva apertura se reenvía a la misma ventana (instancia única).
 
@@ -83,7 +84,7 @@ La posición se define en el **texto alternativo** de la imagen, de modo que el 
 | `![texto normal](foto.png)` | Imagen normal en línea |
 
 - Las rutas son relativas al proyecto (normalmente `assets/...`).
-- Se puede arrastrar y soltar una imagen sobre la ventana para copiarla al proyecto e insertarla en el cursor. Los nombres se sanean (espacios y caracteres especiales pasan a `-`) para que la referencia sea Markdown válido.
+- Se puede arrastrar y soltar una imagen sobre la ventana para copiarla al proyecto e insertarla en el cursor, o usar **Insertar imagen…** en el menú contextual del editor. Los nombres se sanean (espacios y caracteres especiales pasan a `-`) para que la referencia sea Markdown válido.
 - El porcentaje limita el tamaño respecto al área de contenido: las imágenes apaisadas crecen en ancho y las verticales en alto, sin deformarse ni dejar franjas.
 - Las imágenes `left` y `right` se anclan debajo del título de la diapositiva: el título se dibuja a todo el ancho y, después, el texto fluye al lado de la imagen y continúa a todo el ancho por debajo de ella.
 - El fondo lleva un velo automático según el tema para mantener la legibilidad del texto.

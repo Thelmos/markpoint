@@ -30,6 +30,7 @@ import {
   onCloseRequested,
   onFileDrop,
   openExternal,
+  pickImageFiles,
   pickProjectFile,
   pickSavePath,
   readFilePath,
@@ -455,6 +456,19 @@ export default function App() {
     },
     [pushToast],
   );
+
+  const insertImages = useCallback(async () => {
+    try {
+      const picked = await pickImageFiles(t("imageFilter"));
+      if (picked.length === 0) return;
+      addImages(picked.map((file) => ({ name: file.name, bytes: file.bytes })));
+    } catch (error) {
+      await showError(
+        t("imagePickError"),
+        error instanceof Error ? error.message : String(error),
+      );
+    }
+  }, [addImages, t]);
 
   /* --------------------------------------------------- autosave / recovery */
 
@@ -1069,6 +1083,7 @@ export default function App() {
             onChange={setMarkdown}
             onCursorLine={handleEditorCursor}
             onScrollLine={handleEditorScroll}
+            onInsertImage={() => void insertImages()}
           />
         </section>
 

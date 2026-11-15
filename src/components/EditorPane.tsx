@@ -1,8 +1,10 @@
 import {
   forwardRef,
+  useCallback,
   useEffect,
   useImperativeHandle,
   useRef,
+  useState,
 } from "react";
 import { basicSetup } from "codemirror";
 import { Compartment, EditorState, Transaction, type Extension } from "@codemirror/state";
@@ -11,6 +13,7 @@ import { indentWithTab } from "@codemirror/commands";
 import { markdown } from "@codemirror/lang-markdown";
 import { HighlightStyle, syntaxHighlighting } from "@codemirror/language";
 import { tags } from "@lezer/highlight";
+import { EditorContextMenu, type EditorFormat } from "./EditorContextMenu";
 
 export interface EditorHandle {
   scrollToLine: (line: number, options?: { cursor?: boolean; focus?: boolean }) => void;
@@ -25,6 +28,127 @@ interface EditorPaneProps {
   onChange: (value: string) => void;
   onCursorLine: (line: number) => void;
   onScrollLine: (line: number) => void;
+  onInsertImage: () => void;
+}
+
+interface TextEdit {
+  changes: Array<{ from: number; to: number; insert: string }>;
+  selection: { anchor: number; head: number };
+}
+
+const HEADING_PREFIX = /^(#{1,6})\s+/;
+
+/** Counts the asterisks that touch a position on one side. */
+function countStars(state: EditorState, pos: number, direction: -1 | 1): number {
+  let count = 0;
+  while (true) {
+    const next = pos + direction * (count + 1);
+    if (next < 0 || next > state.doc.length) break;
+    const from = direction === 1 ? next - 1 : next;
+    if (state.doc.sliceString(from, from + 1) !== "*") break;
+    count += 1;
+  }
+  return count;
+}
+
+/** Wraps or unwraps the current selection with an inline marker. */
+function toggleInline(state: EditorState, marker: string): TextEdit | null {
+  const { from, to } = state.selection.main;
+  if (from === to) return null;
+  const text = state.doc.sliceString(from, to);
+
+  // Asterisks next to the selection may belong to bold (two) or to bold and
+  // italic (three). Removing or adding a single marker keeps those pairs.
+  const beforeStars = countStars(state, from, -1);
+  const afterStars = countStars(state, to, 1);
+  const removeCount =
+    marker === "**"
+      ? beforeStars >= 2 && afterStars >= 2
+        ? 2
+        : 0
+      : beforeStars === afterStars && beforeStars % 2 === 1
+        ? 1
+        : 0;
+
+  if (removeCount > 0) {
+    const anchor = from - removeCount;
+    return {
+      changes: [
+        { from: anchor, to: from, insert: "" },
+        { from: to, to: to + removeCount, insert: "" },
+      ],
+      selection: { anchor, head: to - removeCount },
+    };
+  }
+
+  // When the selection already includes the markers, remove them instead of
+  // wrapping again. A single asterisk must not strip the markers of bold text.
+  const wrapped =
+    marker === "*"
+      ? text.length > 2 &&
+        text.startsWith("*") &&
+        text.endsWith("*") &&
+        !(text.startsWith("**") && !text.startsWith("***")) &&
+        !(text.endsWith("**") && !text.endsWith("***"))
+      : text.length > marker.length * 2 &&
+        text.startsWith(marker) &&
+        text.endsWith(marker);
+
+  if (wrapped) {
+    const inner = text.slice(marker.length, text.length - marker.length);
+    return {
+      changes: [{ from, to, insert: inner }],
+      selection: { anchor: from, head: from + inner.length },
+    };
+  }
+
+  return {
+    changes: [{ from, to, insert: `${marker}${text}${marker}` }],
+    selection: { anchor: from + marker.length, head: to + marker.length },
+  };
+}
+
+/** Sets (or toggles off) an ATX heading on every line touched by the selection. */
+function applyHeading(state: EditorState, level: number): TextEdit | null {
+  const { from, to } = state.selection.main;
+  if (from === to) return null;
+
+  const first = state.doc.lineAt(from);
+  let last = state.doc.lineAt(to);
+  if (last.number > first.number && to === last.from) {
+    last = state.doc.line(last.number - 1);
+  }
+
+  const lines: Array<{ from: number; to: number; text: string }> = [];
+  for (let number = first.number; number <= last.number; number += 1) {
+    const line = state.doc.line(number);
+    lines.push({ from: line.from, to: line.to, text: line.text });
+  }
+
+  const contentLines = lines.filter((line) => line.text.trim() !== "");
+  const alreadySet = contentLines.every((line) => {
+    const match = HEADING_PREFIX.exec(line.text);
+    return match?.[1].length === level;
+  });
+  const remove = contentLines.length > 0 && alreadySet;
+  const prefix = `${"#".repeat(level)} `;
+
+  const changes: TextEdit["changes"] = [];
+  let delta = 0;
+  for (const line of lines) {
+    if (!line.text.trim()) continue;
+    const base = line.text.replace(HEADING_PREFIX, "");
+    const next = remove ? base : `${prefix}${base}`;
+    if (next === line.text) continue;
+    changes.push({ from: line.from, to: line.to, insert: next });
+    delta += next.length - line.text.length;
+  }
+
+  if (changes.length === 0) return null;
+  return {
+    changes,
+    selection: { anchor: first.from, head: last.to + delta },
+  };
 }
 
 const highlightStyle = HighlightStyle.define([
@@ -66,7 +190,7 @@ const editorTheme = EditorView.theme(
 );
 
 export const EditorPane = forwardRef<EditorHandle, EditorPaneProps>(function EditorPane(
-  { value, placeholder, onChange, onCursorLine, onScrollLine },
+  { value, placeholder, onChange, onCursorLine, onScrollLine, onInsertImage },
   ref,
 ) {
   const hostRef = useRef<HTMLDivElement | null>(null);
@@ -77,6 +201,9 @@ export const EditorPane = forwardRef<EditorHandle, EditorPaneProps>(function Edi
   const initialValue = useRef(value);
   const placeholderCompartment = useRef(new Compartment());
   const callbacks = useRef({ onChange, onCursorLine, onScrollLine });
+  const [menu, setMenu] = useState<{ x: number; y: number; hasSelection: boolean } | null>(
+    null,
+  );
 
   callbacks.current = { onChange, onCursorLine, onScrollLine };
 
@@ -92,12 +219,31 @@ export const EditorPane = forwardRef<EditorHandle, EditorPaneProps>(function Edi
       EditorView.lineWrapping,
       placeholderCompartment.current.of(placeholderExtension(placeholder)),
       keymap.of([indentWithTab]),
+      EditorView.domEventHandlers({
+        contextmenu(event, view) {
+          event.preventDefault();
+          const pos = view.posAtCoords({ x: event.clientX, y: event.clientY });
+          const selection = view.state.selection.main;
+          if (pos != null && (pos < selection.from || pos > selection.to)) {
+            view.dispatch({ selection: { anchor: pos } });
+          }
+          view.focus();
+          const current = view.state.selection.main;
+          setMenu({
+            x: event.clientX,
+            y: event.clientY,
+            hasSelection: current.from !== current.to,
+          });
+          return true;
+        },
+      }),
       EditorView.updateListener.of((update) => {
         if (update.docChanged) {
           lastDocChange.current = performance.now();
           if (!suppressChange.current) {
             callbacks.current.onChange(update.state.doc.toString());
           }
+          setMenu(null);
         }
         if ((update.selectionSet || update.docChanged) && !suppressChange.current) {
           if (update.selectionSet) suppressScrollUntil.current = performance.now() + 220;
@@ -148,6 +294,35 @@ export const EditorPane = forwardRef<EditorHandle, EditorPaneProps>(function Edi
       effects: placeholderCompartment.current.reconfigure(placeholderExtension(placeholder)),
     });
   }, [placeholder]);
+
+  const closeMenu = useCallback(() => {
+    setMenu(null);
+    viewRef.current?.focus();
+  }, []);
+
+  const applyFormat = useCallback((format: EditorFormat) => {
+    const view = viewRef.current;
+    setMenu(null);
+    if (!view) return;
+    const state = view.state;
+    const edit =
+      format === "bold"
+        ? toggleInline(state, "**")
+        : format === "italic"
+          ? toggleInline(state, "*")
+          : applyHeading(state, Number(format.slice(-1)));
+    if (edit) view.dispatch({ changes: edit.changes, selection: edit.selection });
+    view.focus();
+  }, []);
+
+  useEffect(() => {
+    if (!menu) return;
+    const view = viewRef.current;
+    if (!view) return;
+    const close = () => setMenu(null);
+    view.scrollDOM.addEventListener("scroll", close, { passive: true });
+    return () => view.scrollDOM.removeEventListener("scroll", close);
+  }, [menu]);
 
   useEffect(() => {
     const view = viewRef.current;
@@ -205,5 +380,19 @@ export const EditorPane = forwardRef<EditorHandle, EditorPaneProps>(function Edi
     [],
   );
 
-  return <div className="editor-host" ref={hostRef} />;
+  return (
+    <>
+      <div className="editor-host" ref={hostRef} />
+      {menu ? (
+        <EditorContextMenu
+          x={menu.x}
+          y={menu.y}
+          hasSelection={menu.hasSelection}
+          onInsertImage={onInsertImage}
+          onFormat={applyFormat}
+          onClose={closeMenu}
+        />
+      ) : null}
+    </>
+  );
 });

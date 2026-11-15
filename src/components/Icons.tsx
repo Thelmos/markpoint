@@ -14,6 +14,7 @@ export type IconName =
   | "message"
   | "x"
   | "chevron-down"
+  | "chevron-right"
   | "arrow-left"
   | "arrow-right"
   | "clock"
@@ -105,6 +106,8 @@ export function Icon({ name, size = 17, className, ...rest }: IconProps) {
         return <path d="M6 6l12 12M18 6L6 18" />;
       case "chevron-down":
         return <path d="M6 9l6 6 6-6" />;
+      case "chevron-right":
+        return <path d="M9 6l6 6-6 6" />;
       case "arrow-left":
         return <path d="M19 12H5M11 18l-6-6 6-6" />;
       case "arrow-right":
