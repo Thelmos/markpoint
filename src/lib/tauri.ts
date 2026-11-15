@@ -11,6 +11,7 @@ import {
 import { ask, message as messageDialog, open as openDialog, save as saveDialog } from "@tauri-apps/plugin-dialog";
 import { readFile, writeFile } from "@tauri-apps/plugin-fs";
 import { openUrl } from "@tauri-apps/plugin-opener";
+import { isImagePath } from "./assets";
 
 export const isDesktop = tauriIsTauri();
 
@@ -20,21 +21,24 @@ export interface PickedFile {
   bytes: Uint8Array;
 }
 
-function pickInBrowser(accept: string): Promise<File | null> {
+const IMAGE_EXTENSIONS = ["png", "jpg", "jpeg", "gif", "webp", "avif", "svg", "bmp", "ico"];
+
+function pickInBrowser(accept: string, multiple = false): Promise<File[]> {
   return new Promise((resolve) => {
     const input = document.createElement("input");
     input.type = "file";
     input.accept = accept;
+    input.multiple = multiple;
     input.style.display = "none";
     let settled = false;
-    const finish = (file: File | null) => {
+    const finish = (files: File[]) => {
       if (settled) return;
       settled = true;
       input.remove();
-      resolve(file);
+      resolve(files);
     };
-    input.addEventListener("change", () => finish(input.files?.[0] ?? null), { once: true });
-    input.addEventListener("cancel", () => finish(null), { once: true });
+    input.addEventListener("change", () => finish(Array.from(input.files ?? [])), { once: true });
+    input.addEventListener("cancel", () => finish([]), { once: true });
     document.body.appendChild(input);
     input.click();
   });
@@ -56,9 +60,38 @@ export async function pickProjectFile(): Promise<PickedFile | null> {
     return { path: selected, name, bytes };
   }
 
-  const file = await pickInBrowser(".markpoint,.md,.markdown,application/zip,text/markdown");
+  const [file] = await pickInBrowser(".markpoint,.md,.markdown,application/zip,text/markdown");
   if (!file) return null;
   return { path: null, name: file.name, bytes: new Uint8Array(await file.arrayBuffer()) };
+}
+
+/** Opens the image picker and returns the selected files. */
+export async function pickImageFiles(filterName = "Images"): Promise<PickedFile[]> {
+  if (isDesktop) {
+    const selected = await openDialog({
+      multiple: true,
+      directory: false,
+      filters: [{ name: filterName, extensions: IMAGE_EXTENSIONS }],
+    });
+    const paths = typeof selected === "string" ? [selected] : (selected ?? []);
+    const files: PickedFile[] = [];
+    for (const path of paths) {
+      files.push({ path, name: basename(path), bytes: await readFile(path) });
+    }
+    return files;
+  }
+
+  const files = await pickInBrowser("image/*", true);
+  const picked: PickedFile[] = [];
+  for (const file of files) {
+    if (!isImagePath(file.name)) continue;
+    picked.push({
+      path: null,
+      name: file.name,
+      bytes: new Uint8Array(await file.arrayBuffer()),
+    });
+  }
+  return picked;
 }
 
 export async function readFilePath(path: string): Promise<Uint8Array> {

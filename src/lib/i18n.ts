@@ -123,6 +123,16 @@ const es: Dict = {
   presentFromStart: "Presentar desde el principio",
   dirtyIndicator: "Cambios sin guardar",
   exportSuccess: "Exportación completada",
+  contextMenu: "Menú contextual del editor",
+  contextInsertImage: "Insertar imagen…",
+  contextBold: "Negrita",
+  contextItalic: "Cursiva",
+  contextHeading: "Título",
+  contextHeading1: "Título 1",
+  contextHeading2: "Título 2",
+  contextHeading3: "Título 3",
+  imageFilter: "Imágenes",
+  imagePickError: "No se pudieron añadir las imágenes",
 };
 
 const en: Dict = {
@@ -244,6 +254,16 @@ const en: Dict = {
   presentFromStart: "Present from the beginning",
   dirtyIndicator: "Unsaved changes",
   exportSuccess: "Export complete",
+  contextMenu: "Editor context menu",
+  contextInsertImage: "Insert image…",
+  contextBold: "Bold",
+  contextItalic: "Italic",
+  contextHeading: "Heading",
+  contextHeading1: "Heading 1",
+  contextHeading2: "Heading 2",
+  contextHeading3: "Heading 3",
+  imageFilter: "Images",
+  imagePickError: "Could not add the images",
 };
 
 const dictionaries: Record<Lang, Dict> = { es, en };
