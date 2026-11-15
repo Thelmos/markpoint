@@ -184,82 +184,84 @@ export function Toolbar({
 
       <div className="toolbar-spacer" />
 
-      <select
-        className="select"
-        value={theme}
-        onChange={(event) => setTheme(event.target.value as ThemeId)}
-        title={t("themeTooltip")}
-        aria-label={t("theme")}
-      >
-        {THEMES.map((option) => (
-          <option key={option.id} value={option.id}>
-            {t(option.labelKey)}
-          </option>
-        ))}
-      </select>
-
-      <div className="menu-wrap" ref={exportRef}>
-        <button
-          className={`btn ghost${exportOpen ? " active" : ""}`}
-          onClick={() => {
-            setExportOpen((value) => !value);
-            setRecentOpen(false);
-          }}
-          title={t("export")}
-          disabled={busy}
+      <div className="toolbar-actions">
+        <select
+          className="select"
+          value={theme}
+          onChange={(event) => setTheme(event.target.value as ThemeId)}
+          title={t("themeTooltip")}
+          aria-label={t("theme")}
         >
-          <Icon name="download" />
-          <span className="btn-label">{t("export")}</span>
-          <Icon name="chevron-down" className="sm" />
+          {THEMES.map((option) => (
+            <option key={option.id} value={option.id}>
+              {t(option.labelKey)}
+            </option>
+          ))}
+        </select>
+
+        <div className="menu-wrap" ref={exportRef}>
+          <button
+            className={`btn ghost${exportOpen ? " active" : ""}`}
+            onClick={() => {
+              setExportOpen((value) => !value);
+              setRecentOpen(false);
+            }}
+            title={t("export")}
+            disabled={busy}
+          >
+            <Icon name="download" />
+            <span className="btn-label">{t("export")}</span>
+            <Icon name="chevron-down" className="sm" />
+          </button>
+          {exportOpen ? (
+            <div className="menu">
+              <button
+                className="menu-item"
+                onClick={() => {
+                  setExportOpen(false);
+                  onExport("pdf");
+                }}
+              >
+                <Icon name="file-pdf" />
+                <span>
+                  <span className="menu-item-title">{t("exportPdf")}</span>
+                  <span className="menu-item-desc">{t("exportPdfDesc")}</span>
+                </span>
+              </button>
+              <button
+                className="menu-item"
+                onClick={() => {
+                  setExportOpen(false);
+                  onExport("html");
+                }}
+              >
+                <Icon name="file-code" />
+                <span>
+                  <span className="menu-item-title">{t("exportHtml")}</span>
+                  <span className="menu-item-desc">{t("exportHtmlDesc")}</span>
+                </span>
+              </button>
+            </div>
+          ) : null}
+        </div>
+
+        <button
+          className="btn icon"
+          onClick={() => setLang(lang === "es" ? "en" : "es")}
+          title={t("langTooltip")}
+          aria-label={t("language")}
+        >
+          <Icon name="globe" />
+          <span style={{ fontSize: 10.5, fontWeight: 700, letterSpacing: "0.04em" }}>
+            {lang.toUpperCase()}
+          </span>
         </button>
-        {exportOpen ? (
-          <div className="menu">
-            <button
-              className="menu-item"
-              onClick={() => {
-                setExportOpen(false);
-                onExport("pdf");
-              }}
-            >
-              <Icon name="file-pdf" />
-              <span>
-                <span className="menu-item-title">{t("exportPdf")}</span>
-                <span className="menu-item-desc">{t("exportPdfDesc")}</span>
-              </span>
-            </button>
-            <button
-              className="menu-item"
-              onClick={() => {
-                setExportOpen(false);
-                onExport("html");
-              }}
-            >
-              <Icon name="file-code" />
-              <span>
-                <span className="menu-item-title">{t("exportHtml")}</span>
-                <span className="menu-item-desc">{t("exportHtmlDesc")}</span>
-              </span>
-            </button>
-          </div>
-        ) : null}
+
+        <button className="btn primary" onClick={onPresent} title={t("presentTooltip")} disabled={busy}>
+          <Icon name="play" size={15} />
+          {t("present")}
+        </button>
       </div>
-
-      <button
-        className="btn icon"
-        onClick={() => setLang(lang === "es" ? "en" : "es")}
-        title={t("langTooltip")}
-        aria-label={t("language")}
-      >
-        <Icon name="globe" />
-        <span style={{ fontSize: 10.5, fontWeight: 700, letterSpacing: "0.04em" }}>
-          {lang.toUpperCase()}
-        </span>
-      </button>
-
-      <button className="btn primary" onClick={onPresent} title={t("presentTooltip")} disabled={busy}>
-        <Icon name="play" size={15} />
-        {t("present")}
-      </button>
     </header>
   );
 }
