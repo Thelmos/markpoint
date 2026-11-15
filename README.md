@@ -1,4 +1,10 @@
-# MarkPoint
+<p align="center">
+  <img src="src-tauri/icons/icon.png" alt="Logo de MarkPoint" width="128" height="128">
+</p>
+
+<p align="center">
+  <img src="docs/brand/markpoint-wordmark.svg" alt="MarkPoint" width="360">
+</p>
 
 Aplicación de escritorio para crear presentaciones de diapositivas a partir de **Markdown**, con vista previa en vivo, autoajuste de texto, maquetación con imágenes, temas, notas del orador y modo presentación.
 
