@@ -117,6 +117,16 @@ export default function App() {
   const [recent, setRecent] = useState<RecentFile[]>(() => loadRecent());
   const [helpOpen, setHelpOpen] = useState(false);
 
+  /**
+   * Source lines that belong to the active slide. Only its own content is
+   * marked; front matter, separators and the gaps between slides stay dimmed.
+   */
+  const activeLines = useMemo(() => {
+    const slide = slides[active] ?? slides[slides.length - 1];
+    if (!slide) return null;
+    return { from: slide.startLine, to: slide.endLine };
+  }, [active, slides]);
+
   const [session, setSession] = useState<{ mode: "overlay" | "presenter"; start: number } | null>(
     null,
   );
@@ -1080,6 +1090,7 @@ export default function App() {
             ref={editorRef}
             value={markdown}
             placeholder={t("emptyEditor")}
+            activeLines={activeLines}
             onChange={setMarkdown}
             onCursorLine={handleEditorCursor}
             onScrollLine={handleEditorScroll}
