@@ -7,8 +7,16 @@ import {
   useState,
 } from "react";
 import { basicSetup } from "codemirror";
-import { Compartment, EditorState, Transaction, type Extension } from "@codemirror/state";
-import { EditorView, keymap, placeholder as placeholderExtension } from "@codemirror/view";
+import {
+  Compartment,
+  EditorState,
+  StateEffect,
+  StateField,
+  Transaction,
+  type Extension,
+  type Range,
+} from "@codemirror/state";
+import { Decoration, EditorView, keymap, placeholder as placeholderExtension } from "@codemirror/view";
 import { indentWithTab } from "@codemirror/commands";
 import { markdown } from "@codemirror/lang-markdown";
 import { HighlightStyle, syntaxHighlighting } from "@codemirror/language";
@@ -25,6 +33,8 @@ export interface EditorHandle {
 interface EditorPaneProps {
   value: string;
   placeholder: string;
+  /** Lines of the slide that is being edited; everything else is dimmed. */
+  activeLines: { from: number; to: number } | null;
   onChange: (value: string) => void;
   onCursorLine: (line: number) => void;
   onScrollLine: (line: number) => void;
@@ -189,8 +199,43 @@ const editorTheme = EditorView.theme(
   { dark: true },
 );
 
+const setActiveLines = StateEffect.define<{ from: number; to: number } | null>();
+
+/** Identity of a line range; slides are re-parsed on every keystroke. */
+function linesKey(range: { from: number; to: number } | null): string {
+  return range ? `${range.from}:${range.to}` : "";
+}
+
+const activeLinesField = StateField.define<{ from: number; to: number } | null>({
+  create: () => null,
+  update(value, transaction) {
+    for (const effect of transaction.effects) {
+      if (effect.is(setActiveLines)) return effect.value;
+    }
+    return value;
+  },
+});
+
+/** Marks the lines of the active slide so the rest can be dimmed with CSS. */
+const activeLinesDecoration = EditorView.decorations.compute(
+  ["doc", activeLinesField],
+  (state) => {
+    const range = state.field(activeLinesField);
+    if (!range) return Decoration.none;
+    const first = Math.max(1, Math.min(range.from, state.doc.lines));
+    const last = Math.min(range.to, state.doc.lines);
+    const decorations: Range<Decoration>[] = [];
+    for (let number = first; number <= last; number += 1) {
+      decorations.push(
+        Decoration.line({ class: "cm-active-slide" }).range(state.doc.line(number).from),
+      );
+    }
+    return Decoration.set(decorations);
+  },
+);
+
 export const EditorPane = forwardRef<EditorHandle, EditorPaneProps>(function EditorPane(
-  { value, placeholder, onChange, onCursorLine, onScrollLine, onInsertImage },
+  { value, placeholder, activeLines, onChange, onCursorLine, onScrollLine, onInsertImage },
   ref,
 ) {
   const hostRef = useRef<HTMLDivElement | null>(null);
@@ -201,11 +246,14 @@ export const EditorPane = forwardRef<EditorHandle, EditorPaneProps>(function Edi
   const initialValue = useRef(value);
   const placeholderCompartment = useRef(new Compartment());
   const callbacks = useRef({ onChange, onCursorLine, onScrollLine });
+  const activeLinesRef = useRef(activeLines);
+  const activeLinesKey = useRef(linesKey(activeLines));
   const [menu, setMenu] = useState<{ x: number; y: number; hasSelection: boolean } | null>(
     null,
   );
 
   callbacks.current = { onChange, onCursorLine, onScrollLine };
+  activeLinesRef.current = activeLines;
 
   useEffect(() => {
     const host = hostRef.current;
@@ -216,6 +264,8 @@ export const EditorPane = forwardRef<EditorHandle, EditorPaneProps>(function Edi
       markdown(),
       syntaxHighlighting(highlightStyle),
       editorTheme,
+      activeLinesField,
+      activeLinesDecoration,
       EditorView.lineWrapping,
       placeholderCompartment.current.of(placeholderExtension(placeholder)),
       keymap.of([indentWithTab]),
@@ -259,6 +309,9 @@ export const EditorPane = forwardRef<EditorHandle, EditorPaneProps>(function Edi
       parent: host,
     });
     viewRef.current = view;
+    if (activeLinesRef.current) {
+      view.dispatch({ effects: setActiveLines.of(activeLinesRef.current) });
+    }
 
     let raf = 0;
     const onScroll = () => {
@@ -294,6 +347,15 @@ export const EditorPane = forwardRef<EditorHandle, EditorPaneProps>(function Edi
       effects: placeholderCompartment.current.reconfigure(placeholderExtension(placeholder)),
     });
   }, [placeholder]);
+
+  useEffect(() => {
+    const view = viewRef.current;
+    if (!view) return;
+    const key = linesKey(activeLines);
+    if (key === activeLinesKey.current) return;
+    activeLinesKey.current = key;
+    view.dispatch({ effects: setActiveLines.of(activeLines) });
+  }, [activeLines]);
 
   const closeMenu = useCallback(() => {
     setMenu(null);
@@ -382,7 +444,7 @@ export const EditorPane = forwardRef<EditorHandle, EditorPaneProps>(function Edi
 
   return (
     <>
-      <div className="editor-host" ref={hostRef} />
+      <div className={`editor-host${activeLines ? " slide-focus" : ""}`} ref={hostRef} />
       {menu ? (
         <EditorContextMenu
           x={menu.x}

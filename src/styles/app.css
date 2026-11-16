@@ -601,6 +601,15 @@ button {
 
 .slide-item {
   position: relative;
+  transition: opacity 0.18s ease;
+}
+
+.slide-item:not(.active) {
+  opacity: 0.55;
+}
+
+.slide-item:not(.active):hover {
+  opacity: 0.9;
 }
 
 .slide-meta {
@@ -1061,6 +1070,16 @@ button {
 
 .editor-host .cm-line {
   padding-left: 4px;
+}
+
+/* Dim everything that is not part of the slide being edited. */
+.editor-host.slide-focus .cm-line {
+  opacity: 0.4;
+  transition: opacity 0.18s ease;
+}
+
+.editor-host.slide-focus .cm-line.cm-active-slide {
+  opacity: 1;
 }
 
 .editor-host .cm-gutters {

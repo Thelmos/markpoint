@@ -32,7 +32,7 @@ En Windows el empaquetado se limita a NSIS mediante `src-tauri/tauri.windows.con
 
 1. Escribe Markdown en el panel izquierdo.
 2. Cada diapositiva se separa con una línea `---`.
-3. El panel derecho muestra todas las diapositivas. Al mover el cursor o hacer scroll en el editor, la lista se centra en la diapositiva correspondiente; al hacer scroll o clic en una diapositiva, el editor salta a su línea.
+3. El panel derecho muestra todas las diapositivas. Al mover el cursor o hacer scroll en el editor, la lista se centra en la diapositiva correspondiente y las demás se atenúan; al hacer scroll o clic en una diapositiva, el editor salta a su línea y resalta su contenido.
 4. `F5` entra en modo presentación. `Espacio` / `→` avanzan, `←` retrocede, `N` muestra notas (modo de un monitor), `T` oculta el temporizador, `P` lo pausa y `Esc` sale.
 5. `Ctrl+S` guarda, `Ctrl+Shift+S` guarda como, `Ctrl+O` abre y `Ctrl+N` crea una presentación.
 6. Al pulsar con el botón derecho sobre el texto del editor aparece un menú contextual: **Insertar imagen…** está siempre disponible; **Negrita**, **Cursiva** y los **títulos 1–3** se activan cuando hay texto seleccionado y aplican el formato a la selección.
