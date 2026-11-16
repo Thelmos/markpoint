@@ -13,13 +13,20 @@ function stripNotes(markdown: string): { content: string; notes: string } {
   return { content: content.trim(), notes: notes.join("\n\n").trim() };
 }
 
-function makeSlide(index: number, raw: string, startLine: number, endLine: number): Slide {
+function makeSlide(
+  index: number,
+  raw: string,
+  startLine: number,
+  endLine: number,
+  separatorLine: number | null,
+): Slide {
   const { content, notes } = stripNotes(raw);
   return {
     index,
     markdown: content,
     startLine,
     endLine,
+    separatorLine,
     notes,
     empty: content.length === 0,
   };
@@ -65,6 +72,8 @@ export function parseDeck(source: string): ParsedDeck {
 
   const slides: Slide[] = [];
   let chunkStart = contentStart;
+  /** Separator line that opens the next slide once it is pushed. */
+  let pendingSeparator: number | null = null;
 
   const push = (from: number, to: number) => {
     if (to < from) return;
@@ -77,7 +86,8 @@ export function parseDeck(source: string): ParsedDeck {
     if (start > end) return;
 
     const raw = lines.slice(start, end + 1).join("\n");
-    slides.push(makeSlide(slides.length, raw, start + 1, end + 1));
+    slides.push(makeSlide(slides.length, raw, start + 1, end + 1, pendingSeparator));
+    pendingSeparator = null;
   };
 
   let fence: string | null = null;
@@ -91,13 +101,15 @@ export function parseDeck(source: string): ParsedDeck {
     }
     if (!fence && SEPARATOR.test(lines[i])) {
       push(chunkStart, i - 1);
+      pendingSeparator = i + 1;
       chunkStart = i + 1;
     }
   }
   push(chunkStart, lines.length - 1);
 
   if (slides.length === 0) {
-    slides.push(makeSlide(0, "", Math.max(1, contentStart + 1), Math.max(1, contentStart + 1)));
+    const line = Math.max(1, contentStart + 1);
+    slides.push(makeSlide(0, "", line, line, null));
   }
 
   return { frontMatter, slides, frontMatterRange };
@@ -106,10 +118,10 @@ export function parseDeck(source: string): ParsedDeck {
 /**
  * Finds the slide that owns a 1-based source line.
  *
- * Blank lines and `---` separators that sit between two slides belong to the
- * slide above them: while editing the end of a slide the preview must keep
- * that slide selected. Lines before the first slide (front matter, leading
- * blanks) fall back to the first one.
+ * The blank lines that close a slide and its `---` separator belong to that
+ * slide, so the preview keeps showing what is being edited. Blank lines after
+ * the separator already belong to the following slide. Lines before the first
+ * slide (front matter, leading blanks) fall back to it.
  */
 export function slideAtLine(slides: Slide[], line: number): number {
   if (slides.length === 0) return 0;
@@ -117,6 +129,11 @@ export function slideAtLine(slides: Slide[], line: number): number {
   for (let i = 0; i < slides.length; i += 1) {
     if (slides[i].startLine > line) break;
     current = i;
+  }
+  const next = slides[current + 1];
+  if (next) {
+    const separator = next.separatorLine ?? next.startLine - 1;
+    if (line > separator) return current + 1;
   }
   return current;
 }

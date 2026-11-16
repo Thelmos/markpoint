@@ -22,6 +22,8 @@ export interface Slide {
   startLine: number;
   /** 1-based line where the slide content ends. */
   endLine: number;
+  /** 1-based line of the `---` separator that precedes the slide, or null. */
+  separatorLine: number | null;
   notes: string;
   /** True when the slide has no content at all. */
   empty: boolean;
