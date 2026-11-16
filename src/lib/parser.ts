@@ -103,17 +103,22 @@ export function parseDeck(source: string): ParsedDeck {
   return { frontMatter, slides, frontMatterRange };
 }
 
-/** Finds the slide that owns a 1-based source line. */
+/**
+ * Finds the slide that owns a 1-based source line.
+ *
+ * Blank lines and `---` separators that sit between two slides belong to the
+ * slide above them: while editing the end of a slide the preview must keep
+ * that slide selected. Lines before the first slide (front matter, leading
+ * blanks) fall back to the first one.
+ */
 export function slideAtLine(slides: Slide[], line: number): number {
   if (slides.length === 0) return 0;
+  let current = 0;
   for (let i = 0; i < slides.length; i += 1) {
-    if (line >= slides[i].startLine && line <= slides[i].endLine) return i;
+    if (slides[i].startLine > line) break;
+    current = i;
   }
-  // Cursor on a `---` separator: choose the following slide.
-  for (let i = 0; i < slides.length; i += 1) {
-    if (slides[i].startLine > line) return i;
-  }
-  return slides.length - 1;
+  return current;
 }
 
 /** Returns the source line where a slide starts (clamped to the document). */

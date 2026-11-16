@@ -15,10 +15,11 @@ Aplicación de escritorio para crear presentaciones de diapositivas a partir de 
 
 ## Desarrollo
 
-Requisitos: Node.js 20+, Rust estable, Microsoft Edge WebView2 y Visual Studio Build Tools (C++).
+Requisitos: Node.js 20+, Rust estable, Microsoft Edge WebView2 y Visual Studio Build Tools (C++). Las pruebas usan el runner integrado de Node y el soporte nativo de TypeScript, por lo que necesitan Node.js 22.18 o superior.
 
 ```bash
 npm install
+npm test               # pruebas de lógica
 npm run tauri dev      # app de escritorio en modo desarrollo
 npm run tauri build    # instalador NSIS en src-tauri/target/release/bundle/nsis
 ```
