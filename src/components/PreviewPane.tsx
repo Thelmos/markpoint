@@ -7,7 +7,7 @@ import {
   useRef,
   useState,
 } from "react";
-import type { Slide, ThemeId } from "../types";
+import type { ResolvedTheme, Slide } from "../types";
 import type { SrcResolver } from "../lib/markdown";
 import { SlideView } from "./SlideView";
 import { Icon } from "./Icons";
@@ -19,7 +19,7 @@ export interface PreviewHandle {
 
 interface PreviewPaneProps {
   slides: Slide[];
-  theme: ThemeId;
+  theme: ResolvedTheme;
   activeIndex: number;
   paginate: boolean;
   resolve: SrcResolver;
@@ -42,7 +42,7 @@ function slideLabel(slide: Slide): string {
 
 interface FrameProps {
   slide: Slide;
-  theme: ThemeId;
+  theme: ResolvedTheme;
   resolve: SrcResolver;
   paginate: boolean;
   active: boolean;

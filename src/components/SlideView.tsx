@@ -1,12 +1,12 @@
-import { useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
-import type { Slide, ThemeId } from "../types";
+import { useEffect, useLayoutEffect, useMemo, useRef, useState, type CSSProperties } from "react";
+import type { ResolvedTheme, Slide } from "../types";
 import { cssUrl, renderSlideMarkdown, type SrcResolver } from "../lib/markdown";
 import { fitSlide } from "../lib/autofit";
 import { renderMermaidBlocks } from "../lib/mermaid";
 
 interface SlideViewProps {
   slide: Slide;
-  theme: ThemeId;
+  theme: ResolvedTheme;
   resolve: SrcResolver;
   showPageNumber: boolean;
   pageNumber: number;
@@ -36,8 +36,7 @@ export function SlideView({
       active
         ? renderSlideMarkdown(slide.markdown, resolve)
         : { html: "", backgrounds: [], hasBody: false },
-    // Theme is included because cached blob URLs may change with it.
-    [active, slide.markdown, resolve, theme],
+    [active, slide.markdown, resolve],
   );
 
   useLayoutEffect(() => {
@@ -100,13 +99,13 @@ export function SlideView({
     return () => {
       cancelled = true;
     };
-  }, [active, rendered.html, theme]);
+  }, [active, rendered.html, theme.dark]);
 
   return (
     <section
       ref={rootRef}
       className={className ? `slide ${className}` : "slide"}
-      data-theme={theme}
+      style={theme.vars as CSSProperties}
       aria-label={`Slide ${pageNumber}`}
     >
       {active

@@ -26,6 +26,7 @@ import { EditorContextMenu, type EditorFormat } from "./EditorContextMenu";
 export interface EditorHandle {
   scrollToLine: (line: number, options?: { cursor?: boolean; focus?: boolean }) => void;
   insertText: (text: string) => void;
+  replaceRange: (from: number, to: number, insert: string) => void;
   focus: () => void;
   getCursorLine: () => number;
 }
@@ -429,6 +430,17 @@ export const EditorPane = forwardRef<EditorHandle, EditorPaneProps>(function Edi
           scrollIntoView: true,
         });
         view.focus();
+      },
+      replaceRange(from, to, insert) {
+        const view = viewRef.current;
+        if (!view) return;
+        const length = view.state.doc.length;
+        const start = Math.min(Math.max(0, from), length);
+        const end = Math.min(Math.max(start, to), length);
+        view.dispatch({
+          changes: { from: start, to: end, insert },
+          scrollIntoView: false,
+        });
       },
       focus() {
         viewRef.current?.focus();

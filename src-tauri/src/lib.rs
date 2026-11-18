@@ -36,6 +36,56 @@ fn take_startup_file(state: tauri::State<'_, StartupFile>) -> Option<String> {
         .and_then(|mut startup| startup.take())
 }
 
+#[derive(serde::Serialize)]
+struct DataRoot {
+    root: String,
+    portable: bool,
+}
+
+fn is_writable(directory: &Path) -> bool {
+    let probe = directory.join(".markpoint-write-test");
+    match fs::write(&probe, b"ok") {
+        Ok(_) => {
+            let _ = fs::remove_file(&probe);
+            true
+        }
+        Err(_) => false,
+    }
+}
+
+/// Resolves where user data lives. The portable build keeps its themes and
+/// recovery draft next to the executable; the installed build uses app data.
+#[tauri::command]
+fn data_root(app: tauri::AppHandle) -> Result<DataRoot, String> {
+    if !cfg!(debug_assertions) {
+        if let Ok(executable) = std::env::current_exe() {
+            if let Some(directory) = executable.parent() {
+                let installed = directory.join("uninstall.exe").exists();
+                if !installed {
+                    let root = directory.join("MarkPointData");
+                    if fs::create_dir_all(&root).is_ok() && is_writable(&root) {
+                        return Ok(DataRoot {
+                            root: root.to_string_lossy().into_owned(),
+                            portable: true,
+                        });
+                    }
+                }
+            }
+        }
+    }
+
+    let root = app
+        .path()
+        .app_data_dir()
+        .map_err(|error| format!("Could not resolve the app data directory: {error}"))?;
+    fs::create_dir_all(&root)
+        .map_err(|error| format!("Could not create the app data directory: {error}"))?;
+    Ok(DataRoot {
+        root: root.to_string_lossy().into_owned(),
+        portable: false,
+    })
+}
+
 fn browser_candidates() -> Vec<PathBuf> {
     let mut candidates: Vec<PathBuf> = Vec::new();
 
@@ -224,7 +274,11 @@ pub fn run() {
             }
             Ok(())
         })
-        .invoke_handler(tauri::generate_handler![export_pdf, take_startup_file])
+        .invoke_handler(tauri::generate_handler![
+            export_pdf,
+            take_startup_file,
+            data_root
+        ])
         .run(tauri::generate_context!())
         .expect("error while running Tauri application");
 }

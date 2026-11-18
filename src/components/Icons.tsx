@@ -25,6 +25,10 @@ export type IconName =
   | "image"
   | "monitor"
   | "more"
+  | "pencil"
+  | "trash"
+  | "copy"
+  | "upload"
   | "help";
 
 interface IconProps extends SVGProps<SVGSVGElement> {
@@ -163,6 +167,36 @@ export function Icon({ name, size = 17, className, ...rest }: IconProps) {
             <circle cx="5" cy="12" r="1.4" fill="currentColor" stroke="none" />
             <circle cx="12" cy="12" r="1.4" fill="currentColor" stroke="none" />
             <circle cx="19" cy="12" r="1.4" fill="currentColor" stroke="none" />
+          </>
+        );
+      case "pencil":
+        return (
+          <>
+            <path d="M4 20l4.4-1 10-10a2 2 0 0 0-3-3l-10 10z" />
+            <path d="M13.5 6.5l4 4" />
+          </>
+        );
+      case "trash":
+        return (
+          <>
+            <path d="M4 7h16" />
+            <path d="M9 7V4h6v3" />
+            <path d="M6 7l1 13a1 1 0 0 0 1 1h8a1 1 0 0 0 1-1l1-13" />
+          </>
+        );
+      case "copy":
+        return (
+          <>
+            <rect x="9" y="9" width="11" height="11" rx="2" />
+            <path d="M5 15V5a2 2 0 0 1 2-2h8" />
+          </>
+        );
+      case "upload":
+        return (
+          <>
+            <path d="M12 17V5" />
+            <path d="M7 10l5-5 5 5" />
+            <path d="M4 19v2h16v-2" />
           </>
         );
       case "help":

@@ -1801,3 +1801,155 @@ body.audience-mode {
     padding: 0 8px;
   }
 }
+
+/* ------------------------------------------------------------ theme picker */
+
+.theme-button .btn-label {
+  max-width: 120px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.theme-swatch {
+  width: 16px;
+  height: 16px;
+  flex: 0 0 auto;
+  border-radius: 5px;
+  border: 1px solid rgba(255, 255, 255, 0.22);
+}
+
+.theme-menu {
+  width: 244px;
+}
+
+.theme-menu-label {
+  padding: 6px 10px 3px;
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.09em;
+  text-transform: uppercase;
+  color: var(--ui-muted-2);
+}
+
+.theme-item {
+  align-items: center;
+}
+
+.theme-item .menu-item-title {
+  flex: 1;
+}
+
+.theme-check {
+  margin-left: auto;
+  color: var(--ui-accent);
+}
+
+.menu-separator {
+  height: 1px;
+  margin: 5px 4px;
+  background: var(--ui-border-soft);
+}
+
+.theme-dialog {
+  width: min(620px, 94vw);
+}
+
+.theme-manager {
+  gap: 16px;
+}
+
+.theme-list {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.theme-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 7px 8px;
+  border: 1px solid var(--ui-border-soft);
+  border-radius: 9px;
+  background: rgba(255, 255, 255, 0.02);
+}
+
+.theme-row-name {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  font-size: 13px;
+  font-weight: 600;
+}
+
+.theme-row-meta {
+  font-size: 10.5px;
+  font-weight: 500;
+  color: var(--ui-muted-2);
+}
+
+.theme-row-actions {
+  display: flex;
+  gap: 2px;
+}
+
+.theme-current {
+  font-size: 11px;
+  font-weight: 700;
+  color: var(--ui-accent);
+}
+
+.theme-input {
+  flex: 1;
+  min-width: 0;
+  height: 32px;
+  padding: 0 9px;
+  border: 1px solid var(--ui-border);
+  border-radius: 7px;
+  background: var(--ui-panel-2);
+  color: var(--ui-text);
+  font-size: 12.5px;
+  outline: 0;
+}
+
+.theme-input:focus {
+  border-color: var(--ui-accent);
+}
+
+.theme-save {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-top: 10px;
+}
+
+.theme-status {
+  margin: 8px 0 0;
+  font-size: 11.5px;
+  color: var(--ui-accent);
+}
+
+.theme-fonts {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  margin: 0 0 10px;
+  padding: 0;
+  list-style: none;
+}
+
+.theme-fonts li {
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+  font-size: 11.5px;
+  color: var(--ui-muted-2);
+}
+
+.theme-fonts code {
+  color: var(--ui-text);
+  font-size: 11.5px;
+}

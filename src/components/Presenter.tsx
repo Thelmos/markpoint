@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useRef, useState } from "react";
-import type { Slide, ThemeId } from "../types";
+import type { ResolvedTheme, Slide } from "../types";
 import type { SrcResolver } from "../lib/markdown";
 import { formatDuration, useT } from "../lib/i18n";
 import { SlideView } from "./SlideView";
@@ -9,7 +9,7 @@ import { Icon, LogoMark } from "./Icons";
 interface PresenterProps {
   slides: Slide[];
   index: number;
-  theme: ThemeId;
+  theme: ResolvedTheme;
   paginate: boolean;
   resolve: SrcResolver;
   audienceMonitor: string | null;

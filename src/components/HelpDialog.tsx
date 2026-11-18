@@ -89,6 +89,15 @@ export function HelpDialog({ onClose }: { onClose: () => void }) {
           </section>
 
           <section className="help-section">
+            <h3>{t("helpThemeTitle")}</h3>
+            <p>{t("helpThemeDesc")}</p>
+            <pre className="help-code">
+              <code>{t("helpThemeCode")}</code>
+            </pre>
+            <p className="help-note">{t("helpThemeFonts")}</p>
+          </section>
+
+          <section className="help-section">
             <h3>{t("helpNotesTitle")}</h3>
             <p>{t("helpNotesDesc")}</p>
             <pre className="help-code">

@@ -1,33 +1,29 @@
-import type { ThemeId } from "../types";
+import type { ResolvedTheme } from "../types";
 
 type MermaidModule = typeof import("mermaid").default;
 
 let loader: Promise<MermaidModule> | null = null;
-let initializedTheme: ThemeId | null = null;
+let initializedDark: boolean | null = null;
 
 async function getMermaid(): Promise<MermaidModule> {
   if (!loader) loader = import("mermaid").then((mod) => mod.default);
   return loader;
 }
 
-function mermaidTheme(theme: ThemeId): "default" | "dark" {
-  return theme === "dark" || theme === "ocean" ? "dark" : "default";
-}
-
-export async function initMermaid(theme: ThemeId): Promise<MermaidModule> {
+export async function initMermaid(theme: ResolvedTheme): Promise<MermaidModule> {
   const mermaid = await getMermaid();
-  if (initializedTheme !== theme) {
+  if (initializedDark !== theme.dark) {
     mermaid.initialize({
       startOnLoad: false,
       securityLevel: "loose",
-      theme: mermaidTheme(theme),
+      theme: theme.dark ? "dark" : "default",
       fontFamily: '"Segoe UI", system-ui, sans-serif',
       themeVariables: {
         fontSize: "18px",
       },
       flowchart: { htmlLabels: true, curve: "basis" },
     });
-    initializedTheme = theme;
+    initializedDark = theme.dark;
   }
   return mermaid;
 }
@@ -35,7 +31,7 @@ export async function initMermaid(theme: ThemeId): Promise<MermaidModule> {
 let counter = 0;
 
 /** Replaces every pending `.mermaid-block` under `root` with rendered SVG. */
-export async function renderMermaidBlocks(root: ParentNode, theme: ThemeId): Promise<void> {
+export async function renderMermaidBlocks(root: ParentNode, theme: ResolvedTheme): Promise<void> {
   const blocks = Array.from(root.querySelectorAll<HTMLElement>(".mermaid-block:not([data-rendered])"));
   if (blocks.length === 0) return;
   const mermaid = await initMermaid(theme);
