@@ -2,7 +2,7 @@ import { test } from "node:test";
 import assert from "node:assert/strict";
 import { parseDeck } from "../src/lib/parser.ts";
 import { hasThemeOverrides, resolveTheme, specFromResolved } from "../src/lib/themes.ts";
-import { setThemeInMarkdown, themeText } from "../src/lib/themeBlock.ts";
+import { setThemeInMarkdown, themeBlockLines, themeText } from "../src/lib/themeBlock.ts";
 
 test("a preset resolves to its CSS variables", () => {
   const theme = resolveTheme("ocean");
@@ -101,4 +101,17 @@ test("themeText writes nested syntax and fonts", () => {
   assert.match(text, /theme:\n  name: "Mi tema"/);
   assert.match(text, /  syntax:\n    keyword: "#ff0000"/);
   assert.match(text, /  fonts:\n    - family: "Inter"/);
+});
+
+test("themeBlockLines returns the theme range", () => {
+  const markdown =
+    '---\ntitle: Demo\ntheme:\n  base: light\n  bg: "#fff"\nauthor: Me\n---\n\n# Slide\n';
+  const deck = parseDeck(markdown);
+  assert.deepEqual(themeBlockLines(markdown, deck.frontMatterRange), { from: 3, to: 5 });
+});
+
+test("themeBlockLines is null without a theme key", () => {
+  const markdown = "---\ntitle: Demo\n---\n\n# Slide\n";
+  const deck = parseDeck(markdown);
+  assert.equal(themeBlockLines(markdown, deck.frontMatterRange), null);
 });

@@ -68,12 +68,13 @@ import {
   specFromResolved,
   stackWithFamily,
 } from "./lib/themes";
-import { setThemeInMarkdown } from "./lib/themeBlock";
+import { setThemeInMarkdown, themeBlockLines } from "./lib/themeBlock";
 import {
   applyStoredTheme,
   loadThemes,
   type StoredTheme,
 } from "./lib/themeLibrary";
+import { THEME_HINT_KEYS, hintKeyFor } from "./lib/themeHints";
 import { EditorPane, type EditorHandle } from "./components/EditorPane";
 import { PreviewPane, type PreviewHandle } from "./components/PreviewPane";
 import { Toolbar, type ExportKind } from "./components/Toolbar";
@@ -125,6 +126,7 @@ export default function App() {
     () => resolveTheme(deck.frontMatter.theme),
     [deck.frontMatter.theme],
   );
+  const firstSlideLine = slides[0]?.startLine ?? 1;
 
   const [active, setActive] = useState(0);
   const activeRef = useRef(0);
@@ -142,14 +144,29 @@ export default function App() {
   const [themeManagerOpen, setThemeManagerOpen] = useState(false);
 
   /**
-   * Source lines that belong to the active slide. Only its own content is
-   * marked; front matter, separators and the gaps between slides stay dimmed.
+   * Source lines that belong to the active slide. When the cursor is in the
+   * front matter or the gap before the first slide, the whole prelude is
+   * highlighted instead, so editing the theme stays readable.
    */
   const activeLines = useMemo(() => {
+    if (firstSlideLine > 1 && cursorLine < firstSlideLine) {
+      return { from: 1, to: firstSlideLine - 1 };
+    }
     const slide = slides[active] ?? slides[slides.length - 1];
     if (!slide) return null;
     return { from: slide.startLine, to: slide.endLine };
-  }, [active, slides]);
+  }, [active, slides, cursorLine, firstSlideLine]);
+
+  const themeLines = useMemo(
+    () => themeBlockLines(markdown, deck.frontMatterRange),
+    [markdown, deck.frontMatterRange],
+  );
+  const themeHints = useMemo(() => {
+    if (!themeLines) return null;
+    const hints: Record<string, string> = {};
+    for (const key of THEME_HINT_KEYS) hints[key] = t(hintKeyFor(key));
+    return { ...themeLines, hints };
+  }, [themeLines, t]);
 
   const [session, setSession] = useState<{ mode: "overlay" | "presenter"; start: number } | null>(
     null,
@@ -341,16 +358,18 @@ export default function App() {
   const handleEditorCursor = useCallback(
     (line: number) => {
       setCursorLine(line);
+      if (line < firstSlideLine) return;
       setActiveFromEditor(slideAtLine(slides, line));
     },
-    [slides, setActiveFromEditor],
+    [slides, firstSlideLine, setActiveFromEditor],
   );
 
   const handleEditorScroll = useCallback(
     (line: number) => {
+      if (line < firstSlideLine) return;
       setActiveFromEditor(slideAtLine(slides, line));
     },
-    [slides, setActiveFromEditor],
+    [slides, firstSlideLine, setActiveFromEditor],
   );
 
   const handlePreviewActive = useCallback(
@@ -359,9 +378,13 @@ export default function App() {
       originRef.current = "preview";
       activeRef.current = index;
       setActive(index);
-      editorRef.current?.scrollToLine(lineForSlide(slides, index));
+      // While the cursor lives in the front matter, scrolling the preview
+      // must not pull the editor away from the theme block.
+      if (cursorLine >= firstSlideLine) {
+        editorRef.current?.scrollToLine(lineForSlide(slides, index));
+      }
     },
-    [slides],
+    [slides, cursorLine, firstSlideLine],
   );
 
   const handleSlideClick = useCallback(
@@ -1208,6 +1231,7 @@ export default function App() {
             value={markdown}
             placeholder={t("emptyEditor")}
             activeLines={activeLines}
+            themeHints={themeHints}
             onChange={setMarkdown}
             onCursorLine={handleEditorCursor}
             onScrollLine={handleEditorScroll}

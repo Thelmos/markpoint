@@ -88,26 +88,16 @@ function lineOffsets(markdown: string): number[] {
   return offsets;
 }
 
-/**
- * Returns the edit that writes `target` as the `theme` key of the front matter.
- * Existing front matter and its other keys are preserved.
- */
-export function setThemeInMarkdown(
-  markdown: string,
-  frontMatterRange: { start: number; end: number } | null,
-  target: string | ThemeSpec,
-): ThemeEdit {
-  const text = themeText(target);
+interface ThemeBlockLines {
+  themeLine: number;
+  last: number;
+}
 
-  if (!frontMatterRange || frontMatterRange.end <= frontMatterRange.start) {
-    return { from: 0, to: 0, insert: `---\n${text}\n---\n\n` };
-  }
-
-  const lines = markdown.split("\n");
-  const offsets = lineOffsets(markdown);
-  const firstContent = frontMatterRange.start;
-  const closingIndex = Math.min(frontMatterRange.end - 1, lines.length - 1);
-
+function findThemeBlock(
+  lines: string[],
+  firstContent: number,
+  closingIndex: number,
+): ThemeBlockLines | null {
   let themeLine = -1;
   for (let index = firstContent; index < closingIndex; index += 1) {
     if (/^theme\s*:/.test(lines[index])) {
@@ -115,14 +105,7 @@ export function setThemeInMarkdown(
       break;
     }
   }
-
-  if (themeLine === -1) {
-    return {
-      from: offsets[closingIndex] ?? markdown.length,
-      to: offsets[closingIndex] ?? markdown.length,
-      insert: `${text}\n`,
-    };
-  }
+  if (themeLine === -1) return null;
 
   let last = themeLine;
   for (let index = themeLine + 1; index < closingIndex; index += 1) {
@@ -143,6 +126,50 @@ export function setThemeInMarkdown(
     break;
   }
 
+  return { themeLine, last };
+}
+
+/** 1-based line range of the `theme` block, or null when it is absent. */
+export function themeBlockLines(
+  markdown: string,
+  frontMatterRange: { start: number; end: number } | null,
+): { from: number; to: number } | null {
+  if (!frontMatterRange || frontMatterRange.end <= frontMatterRange.start) return null;
+  const lines = markdown.split("\n");
+  const closingIndex = Math.min(frontMatterRange.end - 1, lines.length - 1);
+  const found = findThemeBlock(lines, frontMatterRange.start, closingIndex);
+  return found ? { from: found.themeLine + 1, to: found.last + 1 } : null;
+}
+
+/**
+ * Returns the edit that writes `target` as the `theme` key of the front matter.
+ * Existing front matter and its other keys are preserved.
+ */
+export function setThemeInMarkdown(
+  markdown: string,
+  frontMatterRange: { start: number; end: number } | null,
+  target: string | ThemeSpec,
+): ThemeEdit {
+  const text = themeText(target);
+
+  if (!frontMatterRange || frontMatterRange.end <= frontMatterRange.start) {
+    return { from: 0, to: 0, insert: `---\n${text}\n---\n\n` };
+  }
+
+  const lines = markdown.split("\n");
+  const offsets = lineOffsets(markdown);
+  const closingIndex = Math.min(frontMatterRange.end - 1, lines.length - 1);
+  const found = findThemeBlock(lines, frontMatterRange.start, closingIndex);
+
+  if (!found) {
+    return {
+      from: offsets[closingIndex] ?? markdown.length,
+      to: offsets[closingIndex] ?? markdown.length,
+      insert: `${text}\n`,
+    };
+  }
+
+  const { themeLine, last } = found;
   return {
     from: offsets[themeLine] ?? 0,
     to: (offsets[last] ?? 0) + lines[last].length,

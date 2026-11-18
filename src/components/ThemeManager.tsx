@@ -219,6 +219,8 @@ export function ThemeManager({
         </header>
 
         <div className="help-body theme-manager">
+          <p className="help-note">{t("themeManagerHint")}</p>
+
           <section className="help-section">
             <h3>{t("themeBuiltin")}</h3>
             <div className="theme-list">
