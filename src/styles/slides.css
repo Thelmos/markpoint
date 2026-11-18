@@ -346,10 +346,17 @@
 
 .slide-content th,
 .slide-content td {
-  border-bottom: 1px solid var(--slide-border);
+  border-bottom: var(--slide-table-row-width, 1px) solid
+    var(--slide-table-border, var(--slide-border));
   padding: 0.38em 0.62em;
   text-align: left;
   vertical-align: top;
+}
+
+.slide-content th + th,
+.slide-content td + td {
+  border-left: var(--slide-table-col-width, 0px) solid
+    var(--slide-table-border, var(--slide-border));
 }
 
 .slide-content th {

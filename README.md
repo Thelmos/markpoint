@@ -130,7 +130,8 @@ theme:
 ---
 ```
 
-- Valores disponibles: `bg`, `fg`, `muted`, `accent`, `accent2`, `border`, `codeBg`, `codeFg`, `quoteBg`, `quoteBorder`, `tableHead`, `mark`, `scrim`, `font`, `headingFont`, `padX`, `padY` y `syntax` (`keyword`, `string`, `number`, `comment`, `function`, `type`, `tag`, `attr`, `builtIn`).
+- Valores disponibles: `bg`, `fg`, `muted`, `accent`, `accent2`, `border`, `codeBg`, `codeFg`, `quoteBg`, `quoteBorder`, `tableHead`, `tableLines`, `tableRowLines`, `tableColumnLines`, `mark`, `scrim`, `font`, `headingFont`, `padX`, `padY` y `syntax` (`keyword`, `string`, `number`, `comment`, `function`, `type`, `tag`, `attr`, `builtIn`).
+- `tableLines` cambia el color de la cuadrícula; `tableRowLines` y `tableColumnLines` activan las líneas horizontales y verticales. Por defecto, horizontales sí y verticales no.
 - Solo se aceptan colores, gradientes, familias tipográficas y tamaños; `url()`, `var()` y `env()` se rechazan.
 - **Gestionar temas…** guarda el tema actual, lo renombra, lo duplica, lo elimina y lo exporta o importa como JSON. Los temas guardados se aplican con sus fuentes incluidas.
 - **Añadir fuente…** copia un `.woff2` a `assets/fonts/` y lo aplica al tema. Las fuentes viajan en el `.markpoint` y en el HTML exportado.

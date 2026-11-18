@@ -26,6 +26,9 @@ export interface ThemeValues {
   quoteBg: string;
   quoteBorder: string;
   tableHead: string;
+  tableLines: string;
+  tableRowLines: boolean;
+  tableColumnLines: boolean;
   mark: string;
   scrim: string;
   font: string;

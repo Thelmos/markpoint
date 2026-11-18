@@ -32,6 +32,9 @@ const LIGHT: ThemeValues = {
   quoteBg: "#edf3ff",
   quoteBorder: "#7aa7ff",
   tableHead: "#edf2fa",
+  tableLines: "#dbe2ec",
+  tableRowLines: true,
+  tableColumnLines: false,
   mark: "#fde68a",
   scrim: "rgba(251, 250, 247, 0.35)",
   font: SEGOE,
@@ -63,6 +66,9 @@ const DARK: ThemeValues = {
   quoteBg: "#1b2434",
   quoteBorder: "#6ea8ff",
   tableHead: "#202938",
+  tableLines: "#2c3648",
+  tableRowLines: true,
+  tableColumnLines: false,
   mark: "#facc15",
   scrim: "rgba(9, 13, 20, 0.58)",
   font: SEGOE,
@@ -94,6 +100,9 @@ const OCEAN: ThemeValues = {
   quoteBg: "rgba(103, 232, 249, 0.09)",
   quoteBorder: "#67e8f9",
   tableHead: "rgba(255, 255, 255, 0.1)",
+  tableLines: "rgba(255, 255, 255, 0.2)",
+  tableRowLines: true,
+  tableColumnLines: false,
   mark: "#fde68a",
   scrim: "rgba(3, 14, 28, 0.52)",
   font: SEGOE,
@@ -125,6 +134,9 @@ const SAND: ThemeValues = {
   quoteBg: "#f0e2c5",
   quoteBorder: "#b45309",
   tableHead: "#ecdcbe",
+  tableLines: "#dcc9a6",
+  tableRowLines: true,
+  tableColumnLines: false,
   mark: "#fcd34d",
   scrim: "rgba(249, 242, 227, 0.32)",
   font: 'Georgia, "Iowan Old Style", "Times New Roman", serif',
@@ -197,6 +209,7 @@ const COLOR_KEYS = [
   "quoteBg",
   "quoteBorder",
   "tableHead",
+  "tableLines",
   "mark",
   "scrim",
 ] as const;
@@ -353,6 +366,7 @@ const VAR_NAMES: Record<string, string> = {
   quoteBg: "--slide-quote-bg",
   quoteBorder: "--slide-quote-border",
   tableHead: "--slide-table-head",
+  tableLines: "--slide-table-border",
   mark: "--slide-mark",
   scrim: "--slide-bg-scrim",
   font: "--slide-font",
@@ -377,6 +391,8 @@ function varsFor(values: ThemeValues): Record<string, string> {
   for (const key of FONT_KEYS) vars[VAR_NAMES[key]] = values[key];
   vars["--slide-pad-x"] = `${values.padX}px`;
   vars["--slide-pad-y"] = `${values.padY}px`;
+  vars["--slide-table-row-width"] = values.tableRowLines ? "1px" : "0px";
+  vars["--slide-table-col-width"] = values.tableColumnLines ? "1px" : "0px";
   for (const key of SYNTAX_KEYS) {
     const varName = SYNTAX_VARS[key];
     const color = values.syntax[key as keyof ThemeSyntax];
@@ -460,6 +476,11 @@ export function resolveTheme(raw: unknown): ResolvedTheme {
     custom = true;
   }
 
+  // Table lines follow the border colour unless the theme overrides them.
+  if (spec.tableLines === undefined || !isSafeColor(spec.tableLines)) {
+    values.tableLines = values.border;
+  }
+
   for (const key of FONT_KEYS) {
     const value = spec[key];
     if (value === undefined) continue;
@@ -479,6 +500,17 @@ export function resolveTheme(raw: unknown): ResolvedTheme {
       continue;
     }
     values[key] = Math.min(200, Math.max(0, Math.round(value)));
+    custom = true;
+  }
+
+  for (const key of ["tableRowLines", "tableColumnLines"] as const) {
+    const value = spec[key];
+    if (value === undefined) continue;
+    if (typeof value !== "boolean") {
+      warnings.push(`${key}: invalid value`);
+      continue;
+    }
+    values[key] = value;
     custom = true;
   }
 

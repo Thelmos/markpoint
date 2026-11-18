@@ -41,6 +41,42 @@ test("padding is clamped", () => {
   assert.equal(theme.warnings.length, 0);
 });
 
+test("table lines follow the border colour unless overridden", () => {
+  const base = resolveTheme("light");
+  assert.equal(base.values.tableLines, base.values.border);
+  assert.equal(base.values.tableRowLines, true);
+  assert.equal(base.values.tableColumnLines, false);
+
+  const border = resolveTheme({ base: "light", border: "#ff0000" });
+  assert.equal(border.values.tableLines, "#ff0000");
+
+  const explicit = resolveTheme({ base: "light", tableLines: "#00ff00" });
+  assert.equal(explicit.values.tableLines, "#00ff00");
+  assert.equal(explicit.vars["--slide-table-border"], "#00ff00");
+});
+
+test("table line toggles map to border widths", () => {
+  const theme = resolveTheme({ base: "light", tableRowLines: false, tableColumnLines: true });
+  assert.equal(theme.vars["--slide-table-row-width"], "0px");
+  assert.equal(theme.vars["--slide-table-col-width"], "1px");
+
+  const invalid = resolveTheme({ base: "light", tableRowLines: "no" });
+  assert.equal(invalid.values.tableRowLines, true);
+  assert.ok(invalid.warnings.length > 0);
+});
+
+test("themeText writes the table settings", () => {
+  const text = themeText({
+    base: "light",
+    tableLines: "#ff0000",
+    tableRowLines: false,
+    tableColumnLines: true,
+  });
+  assert.match(text, /tableLines: "#ff0000"/);
+  assert.match(text, /tableRowLines: false/);
+  assert.match(text, /tableColumnLines: true/);
+});
+
 test("overrides are detected", () => {
   assert.equal(hasThemeOverrides("ocean"), false);
   assert.equal(hasThemeOverrides({ base: "ocean", name: "X" }), false);

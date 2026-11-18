@@ -22,6 +22,9 @@ export const THEME_HINT_KEYS = [
   "quoteBg",
   "quoteBorder",
   "tableHead",
+  "tableLines",
+  "tableRowLines",
+  "tableColumnLines",
   "mark",
   "scrim",
   "font",
@@ -66,6 +69,10 @@ export const THEME_HINT_GROUPS: Array<{ titleKey: string; keys: string[] }> = [
     ],
   },
   { titleKey: "themeGuideType", keys: ["font", "headingFont", "padX", "padY"] },
+  {
+    titleKey: "themeGuideTables",
+    keys: ["tableLines", "tableRowLines", "tableColumnLines"],
+  },
   {
     titleKey: "themeGuideSyntax",
     keys: [
