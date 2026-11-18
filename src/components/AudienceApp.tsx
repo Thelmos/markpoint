@@ -11,6 +11,7 @@ import {
 import { normalizeAssetPath, type SrcResolver } from "../lib/markdown";
 import { SlideView } from "./SlideView";
 import { SlideViewport } from "./SlideViewport";
+import { ThemeStyle } from "./ThemeStyle";
 
 function clamp(value: number, min: number, max: number): number {
   return Math.min(Math.max(value, min), max);
@@ -138,6 +139,7 @@ function AudienceStage({ init, index }: { init: AudienceInit; index: number }) {
         send(AUDIENCE_NAV, x < window.innerWidth * 0.2 ? -1 : 1);
       }}
     >
+      <ThemeStyle theme={init.theme} resolve={resolve} />
       <SlideViewport className="audience-viewport">
         <SlideView
           key={safeIndex}

@@ -1,19 +1,11 @@
-import type { ThemeId } from "../types";
-
 export interface RecentFile {
   path: string;
   title: string;
-  theme: ThemeId;
   openedAt: number;
 }
 
 const KEY = "markpoint.recent";
 const MAX_RECENT = 8;
-const THEMES: ThemeId[] = ["light", "dark", "ocean", "sand"];
-
-function isTheme(value: unknown): value is ThemeId {
-  return typeof value === "string" && (THEMES as string[]).includes(value);
-}
 
 export function loadRecent(): RecentFile[] {
   try {
@@ -27,8 +19,7 @@ export function loadRecent(): RecentFile[] {
           Boolean(item) &&
           typeof item.path === "string" &&
           typeof item.title === "string" &&
-          typeof item.openedAt === "number" &&
-          isTheme(item.theme),
+          typeof item.openedAt === "number",
       )
       .sort((a, b) => b.openedAt - a.openedAt)
       .slice(0, MAX_RECENT);

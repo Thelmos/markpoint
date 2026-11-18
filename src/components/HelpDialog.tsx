@@ -1,5 +1,6 @@
 import { useEffect, useRef } from "react";
 import { useT } from "../lib/i18n";
+import { hintKeyFor, THEME_HINT_GROUPS } from "../lib/themeHints";
 import { Icon } from "./Icons";
 
 const IMAGE_SYNTAX: Array<{ code: string; label: string }> = [
@@ -86,6 +87,29 @@ export function HelpDialog({ onClose }: { onClose: () => void }) {
                 </li>
               ))}
             </ul>
+          </section>
+
+          <section className="help-section">
+            <h3>{t("helpThemeTitle")}</h3>
+            <p>{t("helpThemeDesc")}</p>
+            <pre className="help-code">
+              <code>{t("helpThemeCode")}</code>
+            </pre>
+            <p className="help-note">{t("helpThemeHover")}</p>
+            {THEME_HINT_GROUPS.map((group) => (
+              <div className="help-hint-group" key={group.titleKey}>
+                <h4>{t(group.titleKey)}</h4>
+                <ul className="help-syntax-list">
+                  {group.keys.map((key) => (
+                    <li key={key}>
+                      <code>{key}</code>
+                      <span>{t(hintKeyFor(key))}</span>
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            ))}
+            <p className="help-note">{t("helpThemeFonts")}</p>
           </section>
 
           <section className="help-section">

@@ -1,17 +1,17 @@
-import type { Lang, Slide, ThemeId } from "../types";
+import type { Lang, ResolvedTheme, Slide } from "../types";
 import { escapeHtml, normalizeAssetPath, slideMarkup, type SrcResolver } from "./markdown";
 import { fitSlide, imagesReady } from "./autofit";
 import { renderMermaidBlocks } from "./mermaid";
 import { fileToDataUrl } from "./assets";
+import { fontFaceCss } from "./themeCss";
 import slidesCss from "../styles/slides.css?inline";
-import themesCss from "../styles/themes.css?inline";
 import katexCss from "../styles/katex-inline.generated.css?inline";
 import deckCss from "../styles/deck.css?inline";
 import printCss from "../styles/print.css?inline";
 
 export interface DeckExportOptions {
   slides: Slide[];
-  theme: ThemeId;
+  theme: ResolvedTheme;
   lang: Lang;
   paginate: boolean;
   title: string;
@@ -54,17 +54,22 @@ export async function renderDeckMarkup(options: DeckExportOptions): Promise<stri
   document.body.appendChild(root);
 
   try {
-    root.innerHTML = options.slides
-      .map(
-        (slide) =>
-          `<div class="export-slide">${slideMarkup(slide, {
-            theme: options.theme,
-            resolve: resolver,
-            index: slide.index,
-            showPageNumber: options.paginate,
-          })}</div>`,
-      )
-      .join("");
+    root.innerHTML =
+      (() => {
+        const css = fontFaceCss(options.theme, resolver);
+        return css ? `<style>${css}</style>` : "";
+      })() +
+      options.slides
+        .map(
+          (slide) =>
+            `<div class="export-slide">${slideMarkup(slide, {
+              theme: options.theme,
+              resolve: resolver,
+              index: slide.index,
+              showPageNumber: options.paginate,
+            })}</div>`,
+        )
+        .join("");
 
     if (document.fonts?.ready) await document.fonts.ready;
     await renderMermaidBlocks(root, options.theme);
@@ -84,7 +89,7 @@ function baseDocument(title: string, lang: Lang, styles: string, body: string, s
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <meta name="generator" content="MarkPoint">
 <title>${escapeHtml(title)}</title>
-<style>${themesCss}\n${slidesCss}\n${katexCss}\n${styles}</style>
+<style>${slidesCss}\n${katexCss}\n${styles}</style>
 </head>
 <body>
 ${body}

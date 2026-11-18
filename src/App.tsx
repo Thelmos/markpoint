@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import type { ProjectData } from "./types";
+import type { ProjectData, ThemeSpec } from "./types";
 import { useAppStore } from "./store";
 import { deckTitle, lineForSlide, parseDeck, slideAtLine } from "./lib/parser";
 import { normalizeAssetPath } from "./lib/markdown";
@@ -7,10 +7,13 @@ import {
   bytesToBlobUrl,
   encodeAssetPath,
   fileToDataUrl,
+  fontAssetPath,
   formatBytes,
+  isFontPath,
   isImagePath,
   sanitizeFileName,
   textToBytes,
+  uniqueFontPath,
 } from "./lib/assets";
 import {
   hasMarkpointExtension,
@@ -30,6 +33,7 @@ import {
   onCloseRequested,
   onFileDrop,
   openExternal,
+  pickFontFile,
   pickImageFiles,
   pickProjectFile,
   pickSavePath,
@@ -57,6 +61,20 @@ import {
 } from "./lib/audience";
 import { buildPrintHtml, buildStandaloneHtml, renderDeckMarkup } from "./lib/export";
 import { translate, useT } from "./lib/i18n";
+import {
+  familyFromFileName,
+  hasThemeOverrides,
+  resolveTheme,
+  specFromResolved,
+  stackWithFamily,
+} from "./lib/themes";
+import { setThemeInMarkdown, themeBlockLines } from "./lib/themeBlock";
+import {
+  applyStoredTheme,
+  loadThemes,
+  type StoredTheme,
+} from "./lib/themeLibrary";
+import { THEME_HINT_KEYS, hintKeyFor } from "./lib/themeHints";
 import { EditorPane, type EditorHandle } from "./components/EditorPane";
 import { PreviewPane, type PreviewHandle } from "./components/PreviewPane";
 import { Toolbar, type ExportKind } from "./components/Toolbar";
@@ -64,6 +82,8 @@ import { Presentation } from "./components/Presentation";
 import { Presenter } from "./components/Presenter";
 import { BusyOverlay, ToastStack, type ToastItem } from "./components/Overlays";
 import { HelpDialog } from "./components/HelpDialog";
+import { ThemeManager } from "./components/ThemeManager";
+import { ThemeStyle } from "./components/ThemeStyle";
 import { Icon } from "./components/Icons";
 
 function clamp(value: number, min: number, max: number): number {
@@ -91,7 +111,6 @@ export default function App() {
   const markdown = useAppStore((state) => state.markdown);
   const files = useAppStore((state) => state.files);
   const manifest = useAppStore((state) => state.manifest);
-  const theme = useAppStore((state) => state.theme);
   const dirty = useAppStore((state) => state.dirty);
   const filePath = useAppStore((state) => state.filePath);
   const setMarkdown = useAppStore((state) => state.setMarkdown);
@@ -103,6 +122,11 @@ export default function App() {
   const slides = deck.slides;
   const paginate = deck.frontMatter.paginate !== false;
   const title = manifest.title.trim() || t("untitled");
+  const resolvedTheme = useMemo(
+    () => resolveTheme(deck.frontMatter.theme),
+    [deck.frontMatter.theme],
+  );
+  const firstSlideLine = slides[0]?.startLine ?? 1;
 
   const [active, setActive] = useState(0);
   const activeRef = useRef(0);
@@ -116,16 +140,33 @@ export default function App() {
   const dragDepth = useRef(0);
   const [recent, setRecent] = useState<RecentFile[]>(() => loadRecent());
   const [helpOpen, setHelpOpen] = useState(false);
+  const [savedThemes, setSavedThemes] = useState<StoredTheme[]>([]);
+  const [themeManagerOpen, setThemeManagerOpen] = useState(false);
 
   /**
-   * Source lines that belong to the active slide. Only its own content is
-   * marked; front matter, separators and the gaps between slides stay dimmed.
+   * Source lines that belong to the active slide. When the cursor is in the
+   * front matter or the gap before the first slide, the whole prelude is
+   * highlighted instead, so editing the theme stays readable.
    */
   const activeLines = useMemo(() => {
+    if (firstSlideLine > 1 && cursorLine < firstSlideLine) {
+      return { from: 1, to: firstSlideLine - 1 };
+    }
     const slide = slides[active] ?? slides[slides.length - 1];
     if (!slide) return null;
     return { from: slide.startLine, to: slide.endLine };
-  }, [active, slides]);
+  }, [active, slides, cursorLine, firstSlideLine]);
+
+  const themeLines = useMemo(
+    () => themeBlockLines(markdown, deck.frontMatterRange),
+    [markdown, deck.frontMatterRange],
+  );
+  const themeHints = useMemo(() => {
+    if (!themeLines) return null;
+    const hints: Record<string, string> = {};
+    for (const key of THEME_HINT_KEYS) hints[key] = t(hintKeyFor(key));
+    return { ...themeLines, hints };
+  }, [themeLines, t]);
 
   const [session, setSession] = useState<{ mode: "overlay" | "presenter"; start: number } | null>(
     null,
@@ -175,12 +216,102 @@ export default function App() {
     }, 3800);
   }, []);
 
+  /* ---------------------------------------------------------------- themes */
+
+  const refreshThemes = useCallback(async () => {
+    try {
+      setSavedThemes(await loadThemes());
+    } catch {
+      setSavedThemes([]);
+    }
+  }, []);
+
+  useEffect(() => {
+    void refreshThemes();
+  }, [refreshThemes]);
+
+  const themeWarningsKey = resolvedTheme.warnings.join("|");
+  const shownThemeWarnings = useRef("");
+  useEffect(() => {
+    if (!themeWarningsKey || themeWarningsKey === shownThemeWarnings.current) return;
+    shownThemeWarnings.current = themeWarningsKey;
+    pushToast(t("themeInvalid"), "error");
+  }, [themeWarningsKey, pushToast, t]);
+
+  const confirmThemeReplace = useCallback(async () => {
+    const raw = parseDeck(useAppStore.getState().markdown).frontMatter.theme;
+    if (!hasThemeOverrides(raw)) return true;
+    return confirmDialog(t("themeDiscardEdits"), {
+      title: "MarkPoint",
+      kind: "warning",
+      okLabel: t("replace"),
+      cancelLabel: t("cancel"),
+    });
+  }, [t]);
+
+  const applyTheme = useCallback(
+    async (target: string | ThemeSpec, options?: { keepEdits?: boolean }) => {
+      const state = useAppStore.getState();
+      const parsed = parseDeck(state.markdown);
+      const current = resolveTheme(parsed.frontMatter.theme);
+      if (
+        typeof target === "string" &&
+        current.presetId === target &&
+        !hasThemeOverrides(parsed.frontMatter.theme)
+      ) {
+        return;
+      }
+      if (!options?.keepEdits && !(await confirmThemeReplace())) return;
+      const edit = setThemeInMarkdown(state.markdown, parsed.frontMatterRange, target);
+      editorRef.current?.replaceRange(edit.from, edit.to, edit.insert);
+    },
+    [confirmThemeReplace],
+  );
+
+  const applySavedTheme = useCallback(
+    async (stored: StoredTheme) => {
+      if (!(await confirmThemeReplace())) return;
+      const addFont = (fileName: string, bytes: Uint8Array) => {
+        const state = useAppStore.getState();
+        const path = fontAssetPath(state.files, fileName);
+        if (!state.files.has(path)) state.addFileAt(path, bytes);
+        return path;
+      };
+      await applyTheme(applyStoredTheme(stored, addFont), { keepEdits: true });
+    },
+    [applyTheme, confirmThemeReplace],
+  );
+
+  const addThemeFont = useCallback(async () => {
+    try {
+      const picked = await pickFontFile(t("themeFontFilter"));
+      if (!picked) return;
+      const family = familyFromFileName(picked.name);
+      const state = useAppStore.getState();
+      const current = resolveTheme(parseDeck(state.markdown).frontMatter.theme);
+      const existing = current.fonts.find((font) => font.family === family);
+      const path = existing?.file ?? uniqueFontPath(state.files, picked.name);
+      state.addFileAt(path, picked.bytes);
+      const fonts = [
+        ...current.fonts.filter((font) => font.family !== family),
+        { family, file: path },
+      ];
+      const spec = specFromResolved(current, { name: current.name ?? undefined, fonts });
+      spec.font = stackWithFamily(current.values.font, family);
+      spec.headingFont = stackWithFamily(current.values.headingFont, family);
+      await applyTheme(spec, { keepEdits: true });
+      pushToast(t("themeFontAdded", { name: family }), "success");
+    } catch (error) {
+      await showError(t("themeError"), error instanceof Error ? error.message : String(error));
+    }
+  }, [applyTheme, pushToast, t]);
+
   /* --------------------------------------------------------------- assets */
 
   const assetUrls = useMemo(() => {
     const map = new Map<string, string>();
     for (const [path, bytes] of files) {
-      if (isImagePath(path)) map.set(path, bytesToBlobUrl(bytes, path));
+      if (isImagePath(path) || isFontPath(path)) map.set(path, bytesToBlobUrl(bytes, path));
     }
     return map;
   }, [files]);
@@ -227,16 +358,18 @@ export default function App() {
   const handleEditorCursor = useCallback(
     (line: number) => {
       setCursorLine(line);
+      if (line < firstSlideLine) return;
       setActiveFromEditor(slideAtLine(slides, line));
     },
-    [slides, setActiveFromEditor],
+    [slides, firstSlideLine, setActiveFromEditor],
   );
 
   const handleEditorScroll = useCallback(
     (line: number) => {
+      if (line < firstSlideLine) return;
       setActiveFromEditor(slideAtLine(slides, line));
     },
-    [slides, setActiveFromEditor],
+    [slides, firstSlideLine, setActiveFromEditor],
   );
 
   const handlePreviewActive = useCallback(
@@ -245,9 +378,13 @@ export default function App() {
       originRef.current = "preview";
       activeRef.current = index;
       setActive(index);
-      editorRef.current?.scrollToLine(lineForSlide(slides, index));
+      // While the cursor lives in the front matter, scrolling the preview
+      // must not pull the editor away from the theme block.
+      if (cursorLine >= firstSlideLine) {
+        editorRef.current?.scrollToLine(lineForSlide(slides, index));
+      }
     },
-    [slides],
+    [slides, cursorLine, firstSlideLine],
   );
 
   const handleSlideClick = useCallback(
@@ -360,7 +497,6 @@ export default function App() {
             rememberRecent({
               path: target,
               title: state.manifest.title.trim() || translate(state.lang, "untitled"),
-              theme: state.manifest.theme,
             }),
           );
         }
@@ -395,7 +531,6 @@ export default function App() {
           rememberRecent({
             path,
             title: project.manifest.title.trim() || basename(path),
-            theme: project.manifest.theme,
           }),
         );
         pushToast(t("opened"), "success");
@@ -426,7 +561,6 @@ export default function App() {
           rememberRecent({
             path: picked.path,
             title: project.manifest.title.trim() || picked.name,
-            theme: project.manifest.theme,
           }),
         );
       }
@@ -638,7 +772,7 @@ export default function App() {
       try {
         const markup = await renderDeckMarkup({
           slides: parsed.slides,
-          theme: state.theme,
+          theme: resolveTheme(parsed.frontMatter.theme),
           lang: state.lang,
           paginate: parsed.frontMatter.paginate !== false,
           title: exportTitle,
@@ -693,11 +827,11 @@ export default function App() {
     const parsed = parseDeck(state.markdown);
     const assets: Record<string, string> = {};
     for (const [path, bytes] of state.files) {
-      if (isImagePath(path)) assets[path] = fileToDataUrl(bytes, path);
+      if (isImagePath(path) || isFontPath(path)) assets[path] = fileToDataUrl(bytes, path);
     }
     return {
       slides: parsed.slides,
-      theme: state.theme,
+      theme: resolveTheme(parsed.frontMatter.theme),
       paginate: parsed.frontMatter.paginate !== false,
       lang: state.lang,
       title: state.manifest.title.trim() || translate(state.lang, "untitled"),
@@ -1066,6 +1200,7 @@ export default function App() {
       onDragLeave={onBrowserDragLeave}
       onDrop={(event) => void onBrowserDrop(event)}
     >
+      <ThemeStyle theme={resolvedTheme} resolve={resolveSrc} />
       <Toolbar
         busy={Boolean(busy)}
         recent={recent}
@@ -1079,6 +1214,11 @@ export default function App() {
         onExport={(kind) => void exportDeck(kind)}
         onPresent={() => void startPresentation()}
         onHelp={() => setHelpOpen(true)}
+        theme={resolvedTheme}
+        savedThemes={savedThemes}
+        onSelectTheme={(id) => void applyTheme(id)}
+        onSelectSavedTheme={(stored) => void applySavedTheme(stored)}
+        onManageThemes={() => setThemeManagerOpen(true)}
       />
 
       <div className="workspace" ref={workspaceRef}>
@@ -1091,6 +1231,7 @@ export default function App() {
             value={markdown}
             placeholder={t("emptyEditor")}
             activeLines={activeLines}
+            themeHints={themeHints}
             onChange={setMarkdown}
             onCursorLine={handleEditorCursor}
             onScrollLine={handleEditorScroll}
@@ -1114,7 +1255,7 @@ export default function App() {
           <PreviewPane
             ref={previewRef}
             slides={slides}
-            theme={theme}
+            theme={resolvedTheme}
             activeIndex={active}
             paginate={paginate}
             resolve={resolveSrc}
@@ -1153,6 +1294,23 @@ export default function App() {
 
       <ToastStack items={toasts} />
       {helpOpen ? <HelpDialog onClose={() => setHelpOpen(false)} /> : null}
+      {themeManagerOpen ? (
+        <ThemeManager
+          theme={resolvedTheme}
+          saved={savedThemes}
+          onClose={() => {
+            setThemeManagerOpen(false);
+            void refreshThemes();
+          }}
+          onThemesChanged={refreshThemes}
+          onApplyPreset={(id) => {
+            void applyTheme(id);
+            setThemeManagerOpen(false);
+          }}
+          onApplySaved={applySavedTheme}
+          onAddFont={addThemeFont}
+        />
+      ) : null}
       {busy ? <BusyOverlay label={busy} /> : null}
 
       {dragActive ? (
@@ -1168,7 +1326,7 @@ export default function App() {
         <Presentation
           slides={slides}
           initialIndex={session.start}
-          theme={theme}
+          theme={resolvedTheme}
           paginate={paginate}
           resolve={resolveSrc}
           onExit={exitPresentation}
@@ -1179,7 +1337,7 @@ export default function App() {
         <Presenter
           slides={slides}
           index={presenterIndex}
-          theme={theme}
+          theme={resolvedTheme}
           paginate={paginate}
           resolve={resolveSrc}
           audienceMonitor={audienceMonitor}

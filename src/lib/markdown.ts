@@ -4,7 +4,7 @@ import taskLists from "markdown-it-task-lists";
 import texmath from "markdown-it-texmath";
 import katex from "katex";
 import hljs from "highlight.js/lib/common";
-import type { BackgroundImage, Slide, SlideRender, ThemeId } from "../types";
+import type { BackgroundImage, ResolvedTheme, Slide, SlideRender } from "../types";
 import { escapeAttr, escapeHtml, parseImageAlt, type SrcResolver } from "./layout";
 
 export { escapeAttr, escapeHtml } from "./layout";
@@ -131,7 +131,7 @@ export function cssUrl(src: string): string {
 }
 
 export interface SlideMarkupOptions {
-  theme: ThemeId;
+  theme: ResolvedTheme;
   resolve: SrcResolver;
   index: number;
   showPageNumber: boolean;
@@ -149,7 +149,10 @@ export function slideMarkup(slide: Slide, options: SlideMarkupOptions): string {
     ? `<div class="slide-number">${options.index + 1}</div>`
     : "";
   const content = hasBody ? "slide-content has-body" : "slide-content";
-  return `<section class="slide" data-theme="${options.theme}">${layers}<div class="${content}">${html}</div>${page}</section>`;
+  const style = Object.entries(options.theme.vars)
+    .map(([key, value]) => `${key}:${value}`)
+    .join(";");
+  return `<section class="slide" style="${escapeAttr(style)}">${layers}<div class="${content}">${html}</div>${page}</section>`;
 }
 
 /** Parses a markdown image path so callers can look it up in the bundle. */

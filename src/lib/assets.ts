@@ -11,6 +11,10 @@ const MIME: Record<string, string> = {
   mp4: "video/mp4",
   webm: "video/webm",
   pdf: "application/pdf",
+  woff2: "font/woff2",
+  woff: "font/woff",
+  ttf: "font/ttf",
+  otf: "font/otf",
 };
 
 export function extensionOf(path: string): string {
@@ -27,6 +31,10 @@ export function isImagePath(path: string): boolean {
   return extensionOf(path) in MIME && mimeOf(path).startsWith("image/");
 }
 
+export function isFontPath(path: string): boolean {
+  return extensionOf(path) in MIME && mimeOf(path).startsWith("font/");
+}
+
 export function bytesToBase64(bytes: Uint8Array): string {
   let binary = "";
   const chunk = 0x8000;
@@ -38,6 +46,15 @@ export function bytesToBase64(bytes: Uint8Array): string {
 
 export function bytesToDataUrl(bytes: Uint8Array, mime: string): string {
   return `data:${mime};base64,${bytesToBase64(bytes)}`;
+}
+
+export function base64ToBytes(value: string): Uint8Array {
+  const binary = atob(value.replace(/\s+/g, ""));
+  const bytes = new Uint8Array(binary.length);
+  for (let index = 0; index < binary.length; index += 1) {
+    bytes[index] = binary.charCodeAt(index);
+  }
+  return bytes;
 }
 
 export function fileToDataUrl(bytes: Uint8Array, path: string): string {
@@ -114,4 +131,25 @@ export function uniqueAssetPath(existing: Map<string, unknown>, fileName: string
     n += 1;
   }
   return candidate;
+}
+
+/** Bundled fonts live under `assets/fonts`, like any other project asset. */
+export function uniqueFontPath(existing: Map<string, unknown>, fileName: string): string {
+  const safe = sanitizeAssetName(fileName);
+  const dot = safe.lastIndexOf(".");
+  const base = dot > 0 ? safe.slice(0, dot) : safe;
+  const ext = dot > 0 ? safe.slice(dot) : ".woff2";
+  let candidate = `assets/fonts/${base}${ext}`;
+  let n = 1;
+  while (existing.has(candidate)) {
+    candidate = `assets/fonts/${base}-${n}${ext}`;
+    n += 1;
+  }
+  return candidate;
+}
+
+/** Reuses an existing font with the same name before creating a copy. */
+export function fontAssetPath(existing: Map<string, unknown>, fileName: string): string {
+  const candidate = `assets/fonts/${sanitizeAssetName(fileName)}`;
+  return existing.has(candidate) ? candidate : uniqueFontPath(existing, fileName);
 }

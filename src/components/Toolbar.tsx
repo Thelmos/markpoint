@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from "react";
-import type { ThemeId } from "../types";
-import { THEMES } from "../lib/themes";
+import type { ResolvedTheme } from "../types";
+import { PRESETS, presetById, resolveTheme, swatchFor } from "../lib/themes";
+import type { StoredTheme } from "../lib/themeLibrary";
 import type { RecentFile } from "../lib/recent";
 import { useAppStore } from "../store";
 import { useT } from "../lib/i18n";
@@ -11,6 +12,8 @@ export type ExportKind = "html" | "pdf";
 interface ToolbarProps {
   busy: boolean;
   recent: RecentFile[];
+  theme: ResolvedTheme;
+  savedThemes: StoredTheme[];
   onNew: () => void;
   onOpen: () => void;
   onOpenRecent: (path: string) => void;
@@ -21,11 +24,16 @@ interface ToolbarProps {
   onExport: (kind: ExportKind) => void;
   onPresent: () => void;
   onHelp: () => void;
+  onSelectTheme: (id: string) => void;
+  onSelectSavedTheme: (theme: StoredTheme) => void;
+  onManageThemes: () => void;
 }
 
 export function Toolbar({
   busy,
   recent,
+  theme,
+  savedThemes,
   onNew,
   onOpen,
   onOpenRecent,
@@ -36,12 +44,13 @@ export function Toolbar({
   onExport,
   onPresent,
   onHelp,
+  onSelectTheme,
+  onSelectSavedTheme,
+  onManageThemes,
 }: ToolbarProps) {
   const t = useT();
   const title = useAppStore((state) => state.manifest.title);
   const setTitle = useAppStore((state) => state.setTitle);
-  const theme = useAppStore((state) => state.theme);
-  const setTheme = useAppStore((state) => state.setTheme);
   const lang = useAppStore((state) => state.lang);
   const setLang = useAppStore((state) => state.setLang);
   const dirty = useAppStore((state) => state.dirty);
@@ -50,9 +59,11 @@ export function Toolbar({
   const exportRef = useRef<HTMLDivElement | null>(null);
   const [recentOpen, setRecentOpen] = useState(false);
   const recentRef = useRef<HTMLDivElement | null>(null);
+  const [themeOpen, setThemeOpen] = useState(false);
+  const themeRef = useRef<HTMLDivElement | null>(null);
 
   useEffect(() => {
-    if (!exportOpen && !recentOpen) return;
+    if (!exportOpen && !recentOpen && !themeOpen) return;
     const close = (event: PointerEvent) => {
       if (exportRef.current && !exportRef.current.contains(event.target as Node)) {
         setExportOpen(false);
@@ -60,11 +71,15 @@ export function Toolbar({
       if (recentRef.current && !recentRef.current.contains(event.target as Node)) {
         setRecentOpen(false);
       }
+      if (themeRef.current && !themeRef.current.contains(event.target as Node)) {
+        setThemeOpen(false);
+      }
     };
     const escape = (event: KeyboardEvent) => {
       if (event.key === "Escape") {
         setExportOpen(false);
         setRecentOpen(false);
+        setThemeOpen(false);
       }
     };
     window.addEventListener("pointerdown", close);
@@ -73,7 +88,11 @@ export function Toolbar({
       window.removeEventListener("pointerdown", close);
       window.removeEventListener("keydown", escape);
     };
-  }, [exportOpen, recentOpen]);
+  }, [exportOpen, recentOpen, themeOpen]);
+
+  const currentPreset = presetById(theme.presetId);
+  const themeLabel = currentPreset ? t(currentPreset.labelKey) : theme.name || t("themeCustom");
+  const themeSwatch = currentPreset ? currentPreset.swatch : swatchFor(theme);
 
   return (
     <header className="toolbar">
@@ -196,19 +215,91 @@ export function Toolbar({
       <div className="toolbar-spacer" />
 
       <div className="toolbar-actions">
-        <select
-          className="select"
-          value={theme}
-          onChange={(event) => setTheme(event.target.value as ThemeId)}
-          title={t("themeTooltip")}
-          aria-label={t("theme")}
-        >
-          {THEMES.map((option) => (
-            <option key={option.id} value={option.id}>
-              {t(option.labelKey)}
-            </option>
-          ))}
-        </select>
+        <div className="menu-wrap" ref={themeRef}>
+          <button
+            className={`btn ghost theme-button${themeOpen ? " active" : ""}`}
+            onClick={() => {
+              setThemeOpen((value) => !value);
+              setExportOpen(false);
+              setRecentOpen(false);
+            }}
+            title={t("themeTooltip")}
+            aria-label={t("theme")}
+            aria-haspopup="menu"
+            aria-expanded={themeOpen}
+            disabled={busy}
+          >
+            <span className="theme-swatch" style={{ background: themeSwatch }} />
+            <span className="btn-label">{themeLabel}</span>
+            <Icon name="chevron-down" className="sm" />
+          </button>
+          {themeOpen ? (
+            <div className="menu theme-menu" role="menu">
+              <div className="theme-menu-label">{t("themeBuiltin")}</div>
+              {PRESETS.map((preset) => (
+                <button
+                  key={preset.id}
+                  className="menu-item theme-item"
+                  role="menuitemradio"
+                  aria-checked={theme.presetId === preset.id}
+                  onClick={() => {
+                    setThemeOpen(false);
+                    onSelectTheme(preset.id);
+                  }}
+                >
+                  <span className="theme-swatch" style={{ background: preset.swatch }} />
+                  <span className="menu-item-title">{t(preset.labelKey)}</span>
+                  {theme.presetId === preset.id ? (
+                    <Icon name="check" size={14} className="theme-check" />
+                  ) : null}
+                </button>
+              ))}
+
+              {savedThemes.length > 0 ? (
+                <>
+                  <div className="theme-menu-label">{t("themeMine")}</div>
+                  {savedThemes.map((saved) => (
+                    <button
+                      key={saved.id}
+                      className="menu-item theme-item"
+                      role="menuitemradio"
+                      aria-checked={!theme.presetId && theme.name === saved.name}
+                      onClick={() => {
+                        setThemeOpen(false);
+                        onSelectSavedTheme(saved);
+                      }}
+                    >
+                      <span
+                        className="theme-swatch"
+                        style={{ background: swatchFor(resolveTheme(saved.spec)) }}
+                      />
+                      <span className="menu-item-title">{saved.name}</span>
+                      {!theme.presetId && theme.name === saved.name ? (
+                        <Icon name="check" size={14} className="theme-check" />
+                      ) : null}
+                    </button>
+                  ))}
+                </>
+              ) : null}
+
+              <div className="menu-separator" role="separator" />
+              <button
+                className="menu-item"
+                role="menuitem"
+                onClick={() => {
+                  setThemeOpen(false);
+                  onManageThemes();
+                }}
+              >
+                <Icon name="more" />
+                <span>
+                  <span className="menu-item-title">{t("themeManage")}</span>
+                  <span className="menu-item-desc">{t("themeManageDesc")}</span>
+                </span>
+              </button>
+            </div>
+          ) : null}
+        </div>
 
         <div className="menu-wrap" ref={exportRef}>
           <button

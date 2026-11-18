@@ -2,7 +2,6 @@ import { createRoot } from "react-dom/client";
 import { isTauri } from "@tauri-apps/api/core";
 import { getCurrentWebviewWindow } from "@tauri-apps/api/webviewWindow";
 import "./styles/app.css";
-import "./styles/themes.css";
 import "./styles/slides.css";
 import "katex/dist/katex.min.css";
 import App from "./App";

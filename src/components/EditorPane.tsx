@@ -21,11 +21,13 @@ import { indentWithTab } from "@codemirror/commands";
 import { markdown } from "@codemirror/lang-markdown";
 import { HighlightStyle, syntaxHighlighting } from "@codemirror/language";
 import { tags } from "@lezer/highlight";
+import type { ThemeHints } from "../lib/themeHints";
 import { EditorContextMenu, type EditorFormat } from "./EditorContextMenu";
 
 export interface EditorHandle {
   scrollToLine: (line: number, options?: { cursor?: boolean; focus?: boolean }) => void;
   insertText: (text: string) => void;
+  replaceRange: (from: number, to: number, insert: string) => void;
   focus: () => void;
   getCursorLine: () => number;
 }
@@ -35,6 +37,8 @@ interface EditorPaneProps {
   placeholder: string;
   /** Lines of the slide that is being edited; everything else is dimmed. */
   activeLines: { from: number; to: number } | null;
+  /** Line range of the theme block and the description of each key. */
+  themeHints: ThemeHints | null;
   onChange: (value: string) => void;
   onCursorLine: (line: number) => void;
   onScrollLine: (line: number) => void;
@@ -234,8 +238,48 @@ const activeLinesDecoration = EditorView.decorations.compute(
   },
 );
 
+const setThemeHints = StateEffect.define<ThemeHints | null>();
+
+const themeHintsField = StateField.define<ThemeHints | null>({
+  create: () => null,
+  update(value, transaction) {
+    for (const effect of transaction.effects) {
+      if (effect.is(setThemeHints)) return effect.value;
+    }
+    return value;
+  },
+});
+
+/** Marks each theme key with a native tooltip describing what it changes. */
+const themeHintsDecoration = EditorView.decorations.compute(
+  ["doc", themeHintsField],
+  (state) => {
+    const range = state.field(themeHintsField);
+    if (!range) return Decoration.none;
+    const first = Math.max(1, Math.min(range.from, state.doc.lines));
+    const last = Math.min(range.to, state.doc.lines);
+    const marks: Range<Decoration>[] = [];
+    for (let number = first; number <= last; number += 1) {
+      const line = state.doc.line(number);
+      const match = /^(\s*(?:-\s*)?)([A-Za-z][A-Za-z0-9]*)\s*:/.exec(line.text);
+      if (!match) continue;
+      const key = match[2];
+      const hint = range.hints[key];
+      if (!hint) continue;
+      const start = line.from + match[1].length;
+      marks.push(
+        Decoration.mark({
+          class: "cm-theme-key",
+          attributes: { title: hint },
+        }).range(start, start + key.length),
+      );
+    }
+    return Decoration.set(marks);
+  },
+);
+
 export const EditorPane = forwardRef<EditorHandle, EditorPaneProps>(function EditorPane(
-  { value, placeholder, activeLines, onChange, onCursorLine, onScrollLine, onInsertImage },
+  { value, placeholder, activeLines, themeHints, onChange, onCursorLine, onScrollLine, onInsertImage },
   ref,
 ) {
   const hostRef = useRef<HTMLDivElement | null>(null);
@@ -248,6 +292,7 @@ export const EditorPane = forwardRef<EditorHandle, EditorPaneProps>(function Edi
   const callbacks = useRef({ onChange, onCursorLine, onScrollLine });
   const activeLinesRef = useRef(activeLines);
   const activeLinesKey = useRef(linesKey(activeLines));
+  const themeHintsKey = useRef("");
   const [menu, setMenu] = useState<{ x: number; y: number; hasSelection: boolean } | null>(
     null,
   );
@@ -266,6 +311,8 @@ export const EditorPane = forwardRef<EditorHandle, EditorPaneProps>(function Edi
       editorTheme,
       activeLinesField,
       activeLinesDecoration,
+      themeHintsField,
+      themeHintsDecoration,
       EditorView.lineWrapping,
       placeholderCompartment.current.of(placeholderExtension(placeholder)),
       keymap.of([indentWithTab]),
@@ -357,6 +404,17 @@ export const EditorPane = forwardRef<EditorHandle, EditorPaneProps>(function Edi
     view.dispatch({ effects: setActiveLines.of(activeLines) });
   }, [activeLines]);
 
+  useEffect(() => {
+    const view = viewRef.current;
+    if (!view) return;
+    const key = themeHints
+      ? `${themeHints.from}:${themeHints.to}:${themeHints.hints.bg ?? ""}`
+      : "";
+    if (key === themeHintsKey.current) return;
+    themeHintsKey.current = key;
+    view.dispatch({ effects: setThemeHints.of(themeHints) });
+  }, [themeHints]);
+
   const closeMenu = useCallback(() => {
     setMenu(null);
     viewRef.current?.focus();
@@ -429,6 +487,17 @@ export const EditorPane = forwardRef<EditorHandle, EditorPaneProps>(function Edi
           scrollIntoView: true,
         });
         view.focus();
+      },
+      replaceRange(from, to, insert) {
+        const view = viewRef.current;
+        if (!view) return;
+        const length = view.state.doc.length;
+        const start = Math.min(Math.max(0, from), length);
+        const end = Math.min(Math.max(start, to), length);
+        view.dispatch({
+          changes: { from: start, to: end, insert },
+          scrollIntoView: false,
+        });
       },
       focus() {
         viewRef.current?.focus();

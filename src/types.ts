@@ -1,11 +1,79 @@
-export type ThemeId = "light" | "dark" | "ocean" | "sand";
 export type Lang = "es" | "en";
 export type ImageFit = "cover" | "contain";
+
+export interface ThemeSyntax {
+  keyword: string;
+  string: string;
+  number: string;
+  comment: string;
+  function: string;
+  type: string;
+  tag: string;
+  attr: string;
+  builtIn: string;
+}
+
+/** Every value a theme can define, with all inherited values already filled. */
+export interface ThemeValues {
+  bg: string;
+  fg: string;
+  muted: string;
+  accent: string;
+  accent2: string;
+  border: string;
+  codeBg: string;
+  codeFg: string;
+  quoteBg: string;
+  quoteBorder: string;
+  tableHead: string;
+  tableLines: string;
+  tableRowLines: boolean;
+  tableColumnLines: boolean;
+  mark: string;
+  scrim: string;
+  font: string;
+  headingFont: string;
+  padX: number;
+  padY: number;
+  syntax: ThemeSyntax;
+}
+
+export interface ThemeFont {
+  family: string;
+  /** Path inside the project bundle, e.g. `assets/fonts/inter.woff2`. */
+  file: string;
+  weight?: string;
+  style?: "normal" | "italic";
+}
+
+/** The shape of the `theme` key in the front matter. */
+export type ThemeSpec = Partial<Omit<ThemeValues, "syntax">> & {
+  name?: string;
+  base?: string;
+  dark?: boolean;
+  fonts?: ThemeFont[];
+  syntax?: Partial<ThemeSyntax>;
+};
+
+export interface ResolvedTheme {
+  /** Preset id when the theme is exactly a built-in preset, otherwise null. */
+  presetId: string | null;
+  /** Preset the theme inherits from. */
+  base: string;
+  /** Custom name written in the front matter, if any. */
+  name: string | null;
+  dark: boolean;
+  values: ThemeValues;
+  vars: Record<string, string>;
+  fonts: ThemeFont[];
+  warnings: string[];
+}
 
 export interface FrontMatter {
   title?: string;
   author?: string;
   paginate?: boolean;
+  theme?: unknown;
   [key: string]: unknown;
 }
 
@@ -40,7 +108,6 @@ export interface Manifest {
   format: "markpoint";
   version: 1;
   title: string;
-  theme: ThemeId;
   createdAt: string;
   updatedAt: string;
 }

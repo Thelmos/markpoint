@@ -1,24 +1,17 @@
 import { unzipSync, zipSync } from "fflate";
-import type { Manifest, ProjectData, ThemeId } from "../types";
+import type { Manifest, ProjectData } from "../types";
 import { bytesToText, extensionOf, isImagePath, textToBytes } from "./assets";
 import { deckTitle, parseDeck } from "./parser";
 
 export const MANIFEST_FILE = "manifest.json";
 export const DEFAULT_MARKDOWN_FILE = "presentation.md";
 
-const THEMES: ThemeId[] = ["light", "dark", "ocean", "sand"];
-
-export function isThemeId(value: unknown): value is ThemeId {
-  return typeof value === "string" && (THEMES as string[]).includes(value);
-}
-
-export function createManifest(title: string, theme: ThemeId = "light"): Manifest {
+export function createManifest(title: string): Manifest {
   const now = new Date().toISOString();
   return {
     format: "markpoint",
     version: 1,
     title,
-    theme,
     createdAt: now,
     updatedAt: now,
   };
@@ -121,7 +114,6 @@ export function readProject(bytes: Uint8Array, fileName: string): ProjectData {
           typeof parsed.title === "string" && parsed.title.trim()
             ? parsed.title.trim()
             : fallbackTitle,
-        theme: isThemeId(parsed.theme) ? parsed.theme : "light",
         createdAt:
           typeof parsed.createdAt === "string" ? parsed.createdAt : new Date().toISOString(),
         updatedAt:

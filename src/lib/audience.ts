@@ -1,4 +1,4 @@
-import type { Lang, Slide, ThemeId } from "../types";
+import type { Lang, ResolvedTheme, Slide } from "../types";
 
 export const AUDIENCE_INIT = "audience-init";
 export const AUDIENCE_INDEX = "audience-index";
@@ -8,7 +8,7 @@ export const AUDIENCE_EXIT = "audience-exit";
 
 export interface AudienceInit {
   slides: Slide[];
-  theme: ThemeId;
+  theme: ResolvedTheme;
   paginate: boolean;
   lang: Lang;
   title: string;

@@ -1,5 +1,5 @@
 import { create } from "zustand";
-import type { Lang, Manifest, ProjectData, ThemeId } from "./types";
+import type { Lang, Manifest, ProjectData } from "./types";
 import { createDemoProject } from "./lib/demo";
 import { uniqueAssetPath } from "./lib/assets";
 
@@ -20,16 +20,15 @@ interface AppState {
   markdownPath: string;
   files: Map<string, Uint8Array>;
   manifest: Manifest;
-  theme: ThemeId;
   lang: Lang;
   filePath: string | null;
   dirty: boolean;
 
   setMarkdown: (markdown: string) => void;
-  setTheme: (theme: ThemeId) => void;
   setLang: (lang: Lang) => void;
   setTitle: (title: string) => void;
   addFile: (fileName: string, bytes: Uint8Array) => string;
+  addFileAt: (path: string, bytes: Uint8Array) => void;
   replaceFile: (path: string, bytes: Uint8Array) => void;
   loadProject: (project: ProjectData, filePath: string | null, dirty?: boolean) => void;
   newProject: (title?: string, lang?: Lang) => void;
@@ -44,19 +43,11 @@ export const useAppStore = create<AppState>()((set, get) => ({
   markdownPath: initial.markdownPath,
   files: initial.files,
   manifest: initial.manifest,
-  theme: initial.manifest.theme,
   lang: detectLang(),
   filePath: null,
   dirty: false,
 
   setMarkdown: (markdown) => set({ markdown, dirty: true }),
-
-  setTheme: (theme) =>
-    set((state) => ({
-      theme,
-      manifest: { ...state.manifest, theme },
-      dirty: true,
-    })),
 
   setLang: (lang) => {
     try {
@@ -81,6 +72,12 @@ export const useAppStore = create<AppState>()((set, get) => ({
     return path;
   },
 
+  addFileAt: (path, bytes) => {
+    const files = new Map(get().files);
+    files.set(path, bytes);
+    set({ files, dirty: true });
+  },
+
   replaceFile: (path, bytes) => {
     const files = new Map(get().files);
     files.set(path, bytes);
@@ -93,7 +90,6 @@ export const useAppStore = create<AppState>()((set, get) => ({
       markdownPath: project.markdownPath,
       files: new Map(project.files),
       manifest: project.manifest,
-      theme: project.manifest.theme,
       filePath,
       dirty,
     }),
@@ -105,7 +101,7 @@ export const useAppStore = create<AppState>()((set, get) => ({
       markdown:
         "---\ntitle: " +
         title +
-        "\npaginate: true\n---\n\n# " +
+        "\npaginate: true\ntheme: light\n---\n\n# " +
         title +
         "\n\n" +
         hint +
@@ -114,7 +110,6 @@ export const useAppStore = create<AppState>()((set, get) => ({
         format: "markpoint" as const,
         version: 1 as const,
         title,
-        theme: "light" as const,
         createdAt: new Date().toISOString(),
         updatedAt: new Date().toISOString(),
       },
@@ -125,7 +120,6 @@ export const useAppStore = create<AppState>()((set, get) => ({
       markdownPath: project.markdownPath,
       files: project.files,
       manifest: project.manifest,
-      theme: project.manifest.theme,
       filePath: null,
       dirty: false,
     });

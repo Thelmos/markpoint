@@ -108,16 +108,55 @@ La posición se define en el **texto alternativo** de la imagen, de modo que el 
 
 ### Temas
 
-Claro, Oscuro, Océano y Arena, seleccionables desde la barra superior. El tema forma parte del proyecto y se guarda en `manifest.json`.
+El tema se define en el front matter del Markdown, así que viaja con el archivo. Un preset:
+
+```yaml
+---
+theme: ocean
+---
+```
+
+O un tema propio, que hereda de `base` los valores no indicados:
+
+```yaml
+---
+theme:
+  name: Mi tema
+  base: light
+  accent: "#0ea5e9"
+  font: "Inter", system-ui, sans-serif
+  padX: 100
+  padY: 82
+---
+```
+
+- Valores disponibles: `bg`, `fg`, `muted`, `accent`, `accent2`, `border`, `codeBg`, `codeFg`, `quoteBg`, `quoteBorder`, `tableHead`, `tableLines`, `tableRowLines`, `tableColumnLines`, `mark`, `scrim`, `font`, `headingFont`, `padX`, `padY` y `syntax` (`keyword`, `string`, `number`, `comment`, `function`, `type`, `tag`, `attr`, `builtIn`).
+- `tableLines` cambia el color de la cuadrícula; `tableRowLines` y `tableColumnLines` activan las líneas horizontales y verticales. Por defecto, horizontales sí y verticales no.
+- Solo se aceptan colores, gradientes, familias tipográficas y tamaños; `url()`, `var()` y `env()` se rechazan.
+- **Gestionar temas…** guarda el tema actual, lo renombra, lo duplica, lo elimina y lo exporta o importa como JSON. Los temas guardados se aplican con sus fuentes incluidas.
+- **Añadir fuente…** copia un `.woff2` a `assets/fonts/` y lo aplica al tema. Las fuentes viajan en el `.markpoint` y en el HTML exportado.
+- Para usar una fuente empaquetada, el bloque queda así:
+
+```yaml
+theme:
+  base: light
+  font: "Inter", system-ui, sans-serif
+  fonts:
+    - family: "Inter"
+      file: "assets/fonts/Inter.woff2"
+```
+
+- Los temas de usuario se guardan en los datos de la aplicación; la versión portable usa una carpeta `MarkPointData` junto al ejecutable.
+- Si un valor no es válido se ignora y se usa el del tema base.
 
 ## Formato de archivo
 
 Una presentación se guarda como un único archivo `.markpoint`, que es un ZIP con:
 
 ```
-manifest.json       # título, tema, versión y fechas
-presentation.md     # contenido Markdown
-assets/...          # imágenes y recursos
+manifest.json       # título, versión y fechas
+presentation.md     # contenido Markdown y tema
+assets/...          # imágenes, fuentes y recursos
 ```
 
 También se puede abrir un `.md` suelto; al guardarlo se convierte en `.markpoint`. Las imágenes referenciadas junto a un `.md` suelto no se empaquetan automáticamente.
@@ -137,14 +176,17 @@ src/
     markdown.ts     renderizado y sintaxis de imágenes
     autofit.ts      cálculo del tamaño de texto por diapositiva
     project.ts      lectura/escritura del ZIP .markpoint
-    recovery.ts     copia de recuperación en los datos de la app
+    themes.ts       presets, validación y resolución del tema
+    themeBlock.ts   escritura del bloque theme en el front matter
+    themeLibrary.ts biblioteca de temas de usuario y fuentes
+    recovery.ts     copia de recuperación en la raíz de datos
     recent.ts       historial de archivos recientes
     export.ts       HTML autónomo y HTML de impresión
     tauri.ts        puente con diálogos, ventanas, monitores y PDF
   components/
     Presenter.tsx   vista del presentador en la ventana principal
     AudienceApp.tsx ventana de audiencia a pantalla completa
-  styles/           interfaz, temas de diapositivas, CSS de exportación
+  styles/           interfaz, diapositivas y CSS de exportación
 src-tauri/
   src/lib.rs        comandos nativos, instancia única y exportación PDF
 ```

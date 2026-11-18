@@ -56,6 +56,7 @@ export const DEMO_MARKDOWN = `---
 title: Presentación de ejemplo
 author: MarkPoint
 paginate: true
+theme: light
 ---
 
 ![bg](assets/background.svg)
@@ -142,7 +143,7 @@ export function createDemoProject(): ProjectData {
   return {
     markdownPath: DEFAULT_MARKDOWN_FILE,
     markdown: DEMO_MARKDOWN,
-    manifest: createManifest("Presentación de ejemplo", "light"),
+    manifest: createManifest("Presentación de ejemplo"),
     files,
   };
 }
