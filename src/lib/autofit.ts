@@ -84,12 +84,22 @@ function fitLayout(content: HTMLElement, available: number): number {
   const hasTitle = Boolean(title && title.textContent?.trim());
 
   if (title && hasTitle) {
+    const heading = title.querySelector<HTMLElement>("h1, h2, h3, h4, h5, h6");
+    let titleScale = 1;
+    if (heading) {
+      const base = Number.parseFloat(getComputedStyle(title).fontSize);
+      const rendered = Number.parseFloat(getComputedStyle(heading).fontSize);
+      if (base > 0 && rendered > 0) titleScale = rendered / base;
+    }
+    // The minimum applies to the rendered heading: a smaller h2 starts from a
+    // larger zone size, so it never drops below 28 px.
+    const minTitleSize = MIN_TITLE_FONT / Math.max(titleScale, 0.01);
     const budget = available * 0.5;
-    const size = fitFontSize(MIN_TITLE_FONT, MAX_TITLE_FONT, (value) => {
+    const size = fitFontSize(minTitleSize, MAX_TITLE_FONT, (value) => {
       title.style.fontSize = `${value}px`;
       return blockHeight(title) <= budget + 0.5;
     });
-    applyFontSize(title, size, MIN_TITLE_FONT, MAX_TITLE_FONT);
+    applyFontSize(title, size, minTitleSize, MAX_TITLE_FONT);
   }
 
   if (!body || !flow) return 0;

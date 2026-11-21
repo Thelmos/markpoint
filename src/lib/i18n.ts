@@ -251,6 +251,8 @@ const es: Dict = {
     "<!-- layout: cover -->\n\n# Título de la portada\n\nSubtítulo de la presentación\n\n---\n\n<!-- layout: content-2c -->\n\n## Dos columnas\n\nEl cuerpo se reparte automáticamente entre las dos columnas.",
   helpLayoutsApply:
     "También puedes cambiarlo con el selector Diseño de la cabecera de la vista previa.",
+  helpLayoutsLevels:
+    "El nivel del encabezado (#, ##, ###…) cambia el tamaño del título, también dentro de un diseño.",
   helpLayoutCover: "Portada: título y subtítulo centrados.",
   helpLayoutSection: "Sección: título y texto centrados.",
   helpLayoutContent1c: "Contenido en una columna: título arriba y cuerpo debajo.",
@@ -530,6 +532,8 @@ const en: Dict = {
     "<!-- layout: cover -->\n\n# Cover title\n\nPresentation subtitle\n\n---\n\n<!-- layout: content-2c -->\n\n## Two columns\n\nThe body flows automatically into both columns.",
   helpLayoutsApply:
     "You can also change it with the Layout selector in the preview header.",
+  helpLayoutsLevels:
+    "The heading level (#, ##, ###…) changes the title size, also inside a layout.",
   helpLayoutCover: "Cover: title and subtitle centred.",
   helpLayoutSection: "Section: title and text centred.",
   helpLayoutContent1c: "One-column content: title on top, body below.",

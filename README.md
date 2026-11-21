@@ -120,6 +120,7 @@ Subtítulo de la presentación
 - Sin directiva, la diapositiva se renderiza como antes: los diseños son opcionales.
 - El título es el primer encabezado de la diapositiva y el cuerpo es el resto.
 - El título empieza en el margen superior, como en «Sin diseño», y el cuerpo usa el espacio que queda debajo.
+- El nivel del encabezado decide el tamaño del título: `#` es el mayor y `##`, `###`… van reduciendo, también dentro de un diseño.
 - Título y cuerpo se autoajustan por separado, con mínimos de 28 px y 13 px.
 - El selector **Diseño** de la cabecera de la vista previa escribe, cambia o quita la directiva de la diapositiva activa.
 - Una directiva desconocida se ignora y se avisa, sin romper el render.

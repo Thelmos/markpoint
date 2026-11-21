@@ -113,6 +113,7 @@ export function HelpDialog({ onClose }: { onClose: () => void }) {
                 <span>{t("helpLayoutContent2c")}</span>
               </li>
             </ul>
+            <p className="help-note">{t("helpLayoutsLevels")}</p>
             <p className="help-note">{t("helpLayoutsApply")}</p>
           </section>
 

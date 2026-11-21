@@ -551,7 +551,7 @@
   align-items: center;
 }
 
-/* The zone controls the size, so every heading level behaves as a title. */
+/* The zone controls the fit, but each heading level keeps its own size. */
 .slide-content.slide-has-layout .layout-title > h1,
 .slide-content.slide-has-layout .layout-title > h2,
 .slide-content.slide-has-layout .layout-title > h3,
@@ -559,8 +559,25 @@
 .slide-content.slide-has-layout .layout-title > h5,
 .slide-content.slide-has-layout .layout-title > h6 {
   margin: 0;
-  font-size: 1em;
   line-height: 1.1;
+}
+
+.slide-content.slide-has-layout .layout-title > h1 {
+  font-size: 1em;
+}
+
+.slide-content.slide-has-layout .layout-title > h2 {
+  font-size: 0.73em;
+}
+
+.slide-content.slide-has-layout .layout-title > h3 {
+  font-size: 0.6em;
+}
+
+.slide-content.slide-has-layout .layout-title > h4,
+.slide-content.slide-has-layout .layout-title > h5,
+.slide-content.slide-has-layout .layout-title > h6 {
+  font-size: 0.52em;
 }
 
 .slide-content.slide-has-layout .layout-title > :first-child {
