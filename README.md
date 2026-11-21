@@ -98,6 +98,34 @@ La posición se define en el **texto alternativo** de la imagen, de modo que el 
 - El fondo lleva un velo automático según el tema para mantener la legibilidad del texto.
 - Al guardar se eliminan del `.markpoint` las imágenes que ya no se referencian en el Markdown, para liberar espacio. Se conservan en memoria durante la sesión.
 
+### Diseños de diapositiva
+
+La primera línea no vacía de una diapositiva puede elegir un diseño con un comentario:
+
+```markdown
+<!-- layout: section -->
+
+# Título de la sección
+
+Texto de apoyo de la sección
+```
+
+| Directiva | Resultado |
+| --- | --- |
+| `section` | Texto a la izquierda, bloque centrado verticalmente |
+| `content-1c` | Contenido en una columna: título arriba y cuerpo debajo |
+| `content-2c` | Contenido en dos columnas: el cuerpo se reparte solo |
+
+- Sin directiva, la diapositiva se renderiza como antes: los diseños son opcionales.
+- El título es el primer encabezado de la diapositiva y el cuerpo es el resto.
+- En `section`, el bloque de título y cuerpo se centra verticalmente y el texto queda alineado a la izquierda.
+- En `content-1c` y `content-2c`, el título empieza en el margen superior, como en «Sin diseño», y el cuerpo usa el espacio que queda debajo.
+- El nivel del encabezado decide el tamaño del título: `#` es el mayor y `##`, `###`… van reduciendo, también dentro de un diseño.
+- Título y cuerpo se autoajustan por separado, con mínimos de 28 px y 13 px.
+- El selector **Diseño** de la cabecera de la vista previa escribe, cambia o quita la directiva de la diapositiva activa.
+- Una directiva desconocida se ignora y se avisa, sin romper el render.
+- En `content-2c`, el texto y las listas se equilibran entre las dos columnas cuando no hay nada más. Si hay una imagen, un diagrama Mermaid o un bloque de código, todo el texto va a una columna y los elementos especiales a la otra; el orden en Markdown decide el lado (texto primero → texto a la izquierda).
+
 ### Markdown compatible
 
 - Títulos, listas, tablas GFM, citas, enlaces, tachado, listas de tareas.

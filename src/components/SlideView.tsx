@@ -1,6 +1,6 @@
 import { useEffect, useLayoutEffect, useMemo, useRef, useState, type CSSProperties } from "react";
 import type { ResolvedTheme, Slide } from "../types";
-import { cssUrl, renderSlideMarkdown, type SrcResolver } from "../lib/markdown";
+import { cssUrl, renderSlideMarkdown, slideContentClass, type SrcResolver } from "../lib/markdown";
 import { fitSlide } from "../lib/autofit";
 import { renderMermaidBlocks } from "../lib/mermaid";
 
@@ -34,9 +34,9 @@ export function SlideView({
   const rendered = useMemo(
     () =>
       active
-        ? renderSlideMarkdown(slide.markdown, resolve)
-        : { html: "", backgrounds: [], hasBody: false },
-    [active, slide.markdown, resolve],
+        ? renderSlideMarkdown(slide.markdown, resolve, slide.layout)
+        : { html: "", backgrounds: [], hasBody: false, layout: null },
+    [active, slide.markdown, slide.layout, resolve],
   );
 
   useLayoutEffect(() => {
@@ -122,7 +122,8 @@ export function SlideView({
         : null}
       {active ? (
         <div
-          className={rendered.hasBody ? "slide-content has-body" : "slide-content"}
+          className={slideContentClass(rendered)}
+          data-layout={rendered.layout ?? undefined}
           dangerouslySetInnerHTML={{ __html: rendered.html }}
         />
       ) : null}

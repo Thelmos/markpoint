@@ -1,8 +1,48 @@
 import { load as loadYaml } from "js-yaml";
-import type { FrontMatter, ParsedDeck, Slide } from "../types";
+import type { FrontMatter, ParsedDeck, Slide, SlideLayout } from "../types";
 
 const SEPARATOR = /^ {0,3}-{3,}[ \t]*$/;
 const NOTES = /<!--\s*notes:\s*([\s\S]*?)-->/gi;
+const LAYOUT_DIRECTIVE = /^\s*<!--\s*layout\s*:\s*([^>]*?)\s*-->\s*$/i;
+
+const LAYOUTS: SlideLayout[] = ["section", "content-1c", "content-2c"];
+
+/** Normalizes the directive value: `content_1c` and `Content-1C` are valid. */
+export function parseLayoutId(value: string): SlideLayout | null {
+  const normalized = value.trim().toLowerCase().replace(/_/g, "-");
+  return (LAYOUTS as string[]).includes(normalized) ? (normalized as SlideLayout) : null;
+}
+
+interface LayoutExtraction {
+  content: string;
+  layout: SlideLayout | null;
+  warning: string | null;
+  /** 0-based line of the directive inside `content`, or -1. */
+  line: number;
+}
+
+/**
+ * Removes a layout directive from the first non-empty line. The directive is
+ * only recognized there; anywhere else it stays as regular Markdown.
+ */
+function extractLayout(content: string): LayoutExtraction {
+  const lines = content.split("\n");
+  for (let index = 0; index < lines.length; index += 1) {
+    if (lines[index].trim() === "") continue;
+    const match = LAYOUT_DIRECTIVE.exec(lines[index]);
+    if (!match) break;
+    const raw = match[1].trim();
+    const layout = parseLayoutId(raw);
+    lines.splice(index, 1);
+    return {
+      content: lines.join("\n"),
+      layout,
+      warning: layout ? null : raw || "?",
+      line: index,
+    };
+  }
+  return { content, layout: null, warning: null, line: -1 };
+}
 
 function stripNotes(markdown: string): { content: string; notes: string } {
   const notes: string[] = [];
@@ -20,7 +60,8 @@ function makeSlide(
   endLine: number,
   separatorLine: number | null,
 ): Slide {
-  const { content, notes } = stripNotes(raw);
+  const layoutInfo = extractLayout(raw);
+  const { content, notes } = stripNotes(layoutInfo.content);
   return {
     index,
     markdown: content,
@@ -28,6 +69,9 @@ function makeSlide(
     endLine,
     separatorLine,
     notes,
+    layout: layoutInfo.layout,
+    layoutWarning: layoutInfo.warning,
+    layoutLine: layoutInfo.line >= 0 ? startLine + layoutInfo.line : null,
     empty: content.length === 0,
   };
 }

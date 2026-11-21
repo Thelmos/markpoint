@@ -59,6 +59,8 @@ paginate: true
 theme: light
 ---
 
+<!-- layout: section -->
+
 ![bg](assets/background.svg)
 
 # MarkPoint

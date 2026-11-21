@@ -27,7 +27,12 @@ import { EditorContextMenu, type EditorFormat } from "./EditorContextMenu";
 export interface EditorHandle {
   scrollToLine: (line: number, options?: { cursor?: boolean; focus?: boolean }) => void;
   insertText: (text: string) => void;
-  replaceRange: (from: number, to: number, insert: string) => void;
+  replaceRange: (
+    from: number,
+    to: number,
+    insert: string,
+    options?: { preserveCursor?: boolean },
+  ) => void;
   focus: () => void;
   getCursorLine: () => number;
 }
@@ -488,14 +493,30 @@ export const EditorPane = forwardRef<EditorHandle, EditorPaneProps>(function Edi
         });
         view.focus();
       },
-      replaceRange(from, to, insert) {
+      replaceRange(from, to, insert, options) {
         const view = viewRef.current;
         if (!view) return;
         const length = view.state.doc.length;
         const start = Math.min(Math.max(0, from), length);
         const end = Math.min(Math.max(start, to), length);
+        const changes = { from: start, to: end, insert };
+
+        if (!options?.preserveCursor) {
+          view.dispatch({ changes, scrollIntoView: false });
+          return;
+        }
+
+        // Map the cursor so it keeps its place in the surrounding content.
+        // A cursor at the insertion point moves after the inserted text.
+        const move = (position: number) => {
+          if (position >= end) return position + insert.length - (end - start);
+          if (position >= start) return start + insert.length;
+          return position;
+        };
+        const { anchor, head } = view.state.selection.main;
         view.dispatch({
-          changes: { from: start, to: end, insert },
+          changes,
+          selection: { anchor: move(anchor), head: move(head) },
           scrollIntoView: false,
         });
       },

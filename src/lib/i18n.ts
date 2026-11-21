@@ -244,6 +244,27 @@ const es: Dict = {
   helpImageRight: "Flotada a la derecha",
   helpImageCenter: "Centrada, 60 %",
   helpImageInline: "Imagen normal en línea",
+  helpLayoutsTitle: "Diseños de diapositiva",
+  helpLayoutsDesc:
+    "La primera línea no vacía elige el diseño. Sin directiva, la diapositiva conserva el aspecto de siempre:",
+  helpLayoutsCode:
+    "<!-- layout: section -->\n\n# Título de la sección\n\nTexto de apoyo de la sección\n\n---\n\n<!-- layout: content-2c -->\n\n## Dos columnas\n\nEl cuerpo se reparte automáticamente entre las dos columnas.",
+  helpLayoutsApply:
+    "También puedes cambiarlo con el selector Diseño de la cabecera de la vista previa.",
+  helpLayoutsLevels:
+    "El nivel del encabezado (#, ##, ###…) cambia el tamaño del título, también dentro de un diseño.",
+  helpLayoutSection: "Sección: texto a la izquierda, centrado verticalmente.",
+  helpLayoutContent1c: "Contenido en una columna: título arriba y cuerpo debajo.",
+  helpLayoutContent2c:
+    "Contenido en dos columnas: el texto se equilibra o comparte columna con los elementos especiales.",
+  layout: "Diseño",
+  layoutTooltip: "Diseño de la diapositiva activa",
+  layoutNone: "Sin diseño",
+  layoutSection: "Sección",
+  layoutContent1c: "Contenido · 1 col.",
+  layoutContent2c: "Contenido · 2 col.",
+  layoutInvalidOption: "Directiva no válida",
+  layoutUnknown: "Diseño desconocido «{name}»: se ignora.",
   helpThemeTitle: "Temas",
   helpThemeDesc:
     "El tema vive en el front matter. Puedes usar un preset o definir tus propios valores:",
@@ -502,6 +523,27 @@ const en: Dict = {
   helpImageRight: "Float right",
   helpImageCenter: "Centered, 60%",
   helpImageInline: "Normal inline image",
+  helpLayoutsTitle: "Slide layouts",
+  helpLayoutsDesc:
+    "The first non-empty line selects the layout. Without a directive, the slide keeps its usual appearance:",
+  helpLayoutsCode:
+    "<!-- layout: section -->\n\n# Section title\n\nSupporting text for the section\n\n---\n\n<!-- layout: content-2c -->\n\n## Two columns\n\nThe body flows automatically into both columns.",
+  helpLayoutsApply:
+    "You can also change it with the Layout selector in the preview header.",
+  helpLayoutsLevels:
+    "The heading level (#, ##, ###…) changes the title size, also inside a layout.",
+  helpLayoutSection: "Section: left-aligned text, vertically centred.",
+  helpLayoutContent1c: "One-column content: title on top, body below.",
+  helpLayoutContent2c:
+    "Two-column content: text balances itself or shares a column with special elements.",
+  layout: "Layout",
+  layoutTooltip: "Layout of the active slide",
+  layoutNone: "No layout",
+  layoutSection: "Section",
+  layoutContent1c: "Content · 1 col.",
+  layoutContent2c: "Content · 2 col.",
+  layoutInvalidOption: "Invalid directive",
+  layoutUnknown: "Unknown layout “{name}”: it is ignored.",
   helpThemeTitle: "Themes",
   helpThemeDesc:
     "The theme lives in the front matter. Use a preset or define your own values:",

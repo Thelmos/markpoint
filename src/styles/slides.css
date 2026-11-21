@@ -484,13 +484,13 @@
   justify-content: center;
   align-items: center;
   margin: 0.35em 0;
-  max-height: 100%;
+  max-height: var(--slide-content-height);
 }
 
 .slide-content .mermaid-block svg {
-  max-width: 100% !important;
-  height: auto !important;
-  max-height: 100%;
+  max-width: 100%;
+  max-height: var(--slide-content-height);
+  height: auto;
 }
 
 .slide-content .mermaid-error {
@@ -502,6 +502,176 @@
   font-size: 0.5em;
   white-space: pre-wrap;
   width: 100%;
+}
+
+/* ------------------------------------------------------------ layouts */
+
+/* Optional layouts split the slide into a title zone and a body zone. The
+   default rendering (no directive) never uses these rules. */
+.slide-content.slide-has-layout {
+  --layout-gap: 0.55em;
+  display: flex;
+  flex-direction: column;
+}
+
+.slide-content.slide-has-layout .layout-stack {
+  position: relative;
+  z-index: 1;
+  display: flex;
+  flex-direction: column;
+  gap: var(--layout-gap);
+  flex: 1;
+  width: 100%;
+  min-height: 0;
+}
+
+/* The title sits at the top margin and the body continues right below it. */
+.slide-content.slide-has-layout .layout-title {
+  flex: 0 0 auto;
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-start;
+  align-items: flex-start;
+  max-width: 100%;
+  min-height: 0;
+  padding-bottom: 0.08em;
+  overflow: hidden;
+}
+
+/* «Sección» centres the title/body group vertically, but keeps the text
+   left-aligned so the Markdown controls the type sizes. */
+.slide-content.layout-centered {
+  justify-content: center;
+}
+
+.slide-content.layout-centered .layout-stack {
+  flex: 0 1 auto;
+  max-height: 100%;
+  justify-content: center;
+}
+
+/* The zone controls the fit, but each heading level keeps its own size. */
+.slide-content.slide-has-layout .layout-title > h1,
+.slide-content.slide-has-layout .layout-title > h2,
+.slide-content.slide-has-layout .layout-title > h3,
+.slide-content.slide-has-layout .layout-title > h4,
+.slide-content.slide-has-layout .layout-title > h5,
+.slide-content.slide-has-layout .layout-title > h6 {
+  margin: 0;
+  line-height: 1.2;
+}
+
+.slide-content.slide-has-layout .layout-title > h1 {
+  font-size: 1em;
+}
+
+/* The layout title is smaller than the default one, so the decorative line
+   needs extra room to clear descenders (g, y, p...). */
+.slide-content.slide-has-layout .layout-title h1::after {
+  margin-top: 0.32em;
+}
+
+.slide-content.slide-has-layout .layout-title > h2 {
+  font-size: 0.73em;
+}
+
+.slide-content.slide-has-layout .layout-title > h3 {
+  font-size: 0.6em;
+}
+
+.slide-content.slide-has-layout .layout-title > h4,
+.slide-content.slide-has-layout .layout-title > h5,
+.slide-content.slide-has-layout .layout-title > h6 {
+  font-size: 0.52em;
+}
+
+.slide-content.slide-has-layout .layout-title > :first-child {
+  margin-top: 0 !important;
+}
+
+.slide-content.slide-has-layout .layout-title > :last-child {
+  margin-bottom: 0 !important;
+}
+
+.slide-content.slide-has-layout .layout-body {
+  flex: 1 1 auto;
+  min-height: 0;
+  width: 100%;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-start;
+}
+
+.slide-content.layout-centered .layout-body {
+  flex: 0 1 auto;
+}
+
+.slide-content.slide-has-layout .layout-flow {
+  flex: 0 0 auto;
+  width: 100%;
+  min-height: 0;
+  overflow-wrap: break-word;
+  hyphens: auto;
+}
+
+.slide-content.slide-has-layout .layout-flow > :first-child {
+  margin-top: 0 !important;
+}
+
+.slide-content.slide-has-layout .layout-flow > :last-child {
+  margin-bottom: 0 !important;
+}
+
+/* Text and lists balance automatically in two CSS columns. */
+.slide-content.slide-has-layout .layout-flow-2c.layout-flow-balanced {
+  column-count: 2;
+  column-gap: 2.4em;
+}
+
+/* With an image, diagram or code block, each group gets its own column. */
+.slide-content.slide-has-layout .layout-columns {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+  gap: 2.4em;
+  align-items: start;
+}
+
+.slide-content.slide-has-layout .layout-col {
+  min-width: 0;
+}
+
+.slide-content.slide-has-layout .layout-col > :first-child {
+  margin-top: 0 !important;
+}
+
+.slide-content.slide-has-layout .layout-col > :last-child {
+  margin-bottom: 0 !important;
+}
+
+/* A column is narrower than the slide: keep images inside it. */
+.slide-content .layout-flow-2c .slide-img {
+  max-width: 100%;
+}
+
+/* Floats cannot span columns; a block inside one column keeps the layout
+   readable instead of pushing the text into an overflowing column. */
+.slide-content .layout-flow-2c .slide-img-left,
+.slide-content .layout-flow-2c .slide-img-right {
+  float: none;
+  display: block;
+  margin-top: 0;
+  margin-bottom: 0.6em;
+}
+
+.slide-content .layout-flow-2c .slide-img-left {
+  margin-right: auto;
+  margin-left: 0;
+}
+
+.slide-content .layout-flow-2c .slide-img-right {
+  margin-right: 0;
+  margin-left: auto;
 }
 
 .slide-number {
