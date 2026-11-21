@@ -564,6 +564,13 @@
 
 .slide-content.slide-has-layout .layout-title > h1 {
   font-size: 1em;
+  line-height: 1.2;
+}
+
+/* The layout title is smaller than the default one, so the decorative line
+   needs extra room to clear descenders (g, y, p...). */
+.slide-content.slide-has-layout .layout-title h1::after {
+  margin-top: 0.32em;
 }
 
 .slide-content.slide-has-layout .layout-title > h2 {
