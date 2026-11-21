@@ -72,6 +72,9 @@ export async function renderDeckMarkup(options: DeckExportOptions): Promise<stri
         .join("");
 
     if (document.fonts?.ready) await document.fonts.ready;
+    // A first fit gives layouts their real body height before diagrams are
+    // measured; the final fit accounts for the scaled diagrams.
+    root.querySelectorAll<HTMLElement>(".slide").forEach((slide) => fitSlide(slide));
     await renderMermaidBlocks(root, options.theme);
     await imagesReady(root);
     root.querySelectorAll<HTMLElement>(".slide").forEach((slide) => fitSlide(slide));

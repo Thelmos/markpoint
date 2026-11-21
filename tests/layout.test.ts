@@ -7,13 +7,8 @@ import {
   slideContentClass,
   splitHtmlBlocks,
 } from "../src/lib/markdown.ts";
-import {
-  MIN_BODY_FONT,
-  MIN_TITLE_FONT,
-  SECTION_MAX_BODY_FONT,
-  SECTION_MAX_TITLE_FONT,
-  fitFontSize,
-} from "../src/lib/autofit.ts";
+import { MIN_BODY_FONT, MIN_TITLE_FONT, SECTION_MAX_BODY_FONT, SECTION_MAX_TITLE_FONT, fitFontSize } from "../src/lib/autofit.ts";
+import { fitSvgSize } from "../src/lib/mermaid.ts";
 
 const DECK = `---
 title: Demo
@@ -228,4 +223,19 @@ test("fitFontSize finds the largest size that fits", () => {
   assert.ok(size <= 40 && size > 39.5, `unexpected size ${size}`);
   assert.equal(fitFontSize(13, 74, () => true), 74);
   assert.equal(fitFontSize(13, 74, () => false), 13);
+});
+
+test("mermaid diagrams scale to the available box", () => {
+  const tall = fitSvgSize(360, 624, 1088, 423);
+  assert.ok(tall);
+  assert.equal(tall.height, 423);
+  assert.ok(tall.width < 250);
+
+  const wide = fitSvgSize(1200, 400, 1088, 423);
+  assert.ok(wide);
+  assert.equal(wide.width, 1088);
+  assert.ok(wide.height < 423);
+
+  assert.equal(fitSvgSize(0, 624, 1088, 423), null);
+  assert.equal(fitSvgSize(360, 624, 0, 423), null);
 });
