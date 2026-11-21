@@ -48,6 +48,7 @@ interface EditorPaneProps {
   onCursorLine: (line: number) => void;
   onScrollLine: (line: number) => void;
   onInsertImage: () => void;
+  onInsertBackground: () => void;
 }
 
 interface TextEdit {
@@ -284,7 +285,7 @@ const themeHintsDecoration = EditorView.decorations.compute(
 );
 
 export const EditorPane = forwardRef<EditorHandle, EditorPaneProps>(function EditorPane(
-  { value, placeholder, activeLines, themeHints, onChange, onCursorLine, onScrollLine, onInsertImage },
+  { value, placeholder, activeLines, themeHints, onChange, onCursorLine, onScrollLine, onInsertImage, onInsertBackground },
   ref,
 ) {
   const hostRef = useRef<HTMLDivElement | null>(null);
@@ -541,6 +542,7 @@ export const EditorPane = forwardRef<EditorHandle, EditorPaneProps>(function Edi
           y={menu.y}
           hasSelection={menu.hasSelection}
           onInsertImage={onInsertImage}
+          onInsertBackground={onInsertBackground}
           onFormat={applyFormat}
           onClose={closeMenu}
         />

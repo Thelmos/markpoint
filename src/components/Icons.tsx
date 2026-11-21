@@ -23,6 +23,8 @@ export type IconName =
   | "check"
   | "alert"
   | "image"
+  | "background"
+  | "template"
   | "monitor"
   | "more"
   | "pencil"
@@ -152,6 +154,21 @@ export function Icon({ name, size = 17, className, ...rest }: IconProps) {
             <rect x="3" y="4" width="18" height="16" rx="2" />
             <circle cx="9" cy="10" r="2" />
             <path d="M21 16l-5-5-9 9" />
+          </>
+        );
+      case "background":
+        return (
+          <>
+            <rect x="3" y="4" width="18" height="16" rx="2" />
+            <path d="M6 8h12M6 12h12M6 16h7" />
+            <circle cx="17.5" cy="16" r="1.5" fill="currentColor" stroke="none" />
+          </>
+        );
+      case "template":
+        return (
+          <>
+            <rect x="3" y="3" width="18" height="18" rx="2" />
+            <path d="M3 9h18M9 21V9" />
           </>
         );
       case "monitor":

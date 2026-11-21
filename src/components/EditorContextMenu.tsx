@@ -10,6 +10,7 @@ interface EditorContextMenuProps {
   y: number;
   hasSelection: boolean;
   onInsertImage: () => void;
+  onInsertBackground: () => void;
   onFormat: (format: EditorFormat) => void;
   onClose: () => void;
 }
@@ -25,6 +26,7 @@ export function EditorContextMenu({
   y,
   hasSelection,
   onInsertImage,
+  onInsertBackground,
   onFormat,
   onClose,
 }: EditorContextMenuProps) {
@@ -98,6 +100,18 @@ export function EditorContextMenu({
       >
         <Icon name="image" size={14} className="context-menu-icon" />
         <span className="context-menu-label">{t("contextInsertImage")}</span>
+      </button>
+
+      <button
+        className="context-menu-item"
+        role="menuitem"
+        onClick={() => {
+          onClose();
+          onInsertBackground();
+        }}
+      >
+        <Icon name="background" size={14} className="context-menu-icon" />
+        <span className="context-menu-label">{t("contextInsertBackground")}</span>
       </button>
 
       <div className="context-menu-separator" role="separator" />

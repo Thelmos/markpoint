@@ -1,7 +1,7 @@
 import { unzipSync, zipSync } from "fflate";
 import type { Manifest, ProjectData } from "../types";
-import { bytesToText, extensionOf, isImagePath, textToBytes } from "./assets";
-import { deckTitle, parseDeck } from "./parser";
+import { bytesToText, extensionOf, isImagePath, textToBytes } from "./assets.ts";
+import { deckTitle, parseDeck } from "./parser.ts";
 
 export const MANIFEST_FILE = "manifest.json";
 export const DEFAULT_MARKDOWN_FILE = "presentation.md";

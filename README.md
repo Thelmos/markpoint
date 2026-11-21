@@ -126,6 +126,43 @@ Texto de apoyo de la sección
 - Una directiva desconocida se ignora y se avisa, sin romper el render.
 - En `content-2c`, el texto y las listas se equilibran entre las dos columnas cuando no hay nada más. Si hay una imagen, un diagrama Mermaid o un bloque de código, todo el texto va a una columna y los elementos especiales a la otra; el orden en Markdown decide el lado (texto primero → texto a la izquierda).
 
+### Fondos y plantillas
+
+- **Fondo…** (menú contextual del editor, bajo **Insertar imagen…**) copia una imagen al proyecto y la usa como fondo de la diapositiva activa. Sustituye el fondo anterior y mantiene la directiva de diseño en la primera línea.
+- El selector **Fondo** de la cabecera de la vista previa, junto a **Diseño**, permite reutilizar cualquier fondo de la presentación en la diapositiva activa, quitarlo o elegir una imagen nueva.
+- **Nuevo desde plantilla…** abre la galería. Cada tarjeta muestra la miniatura, el nombre, la descripción y las diapositivas de ejemplo; desde ahí se puede crear la presentación, exportar, renombrar o eliminar la plantilla.
+- La galería incluye una plantilla de ejemplo. Se guarda una sola vez en la carpeta de datos y, a partir de ahí, se comporta como cualquier otra.
+- Importar un zip valida todo antes de escribir nada: rutas relativas, sin `..`, límites de tamaño, archivos permitidos y recursos referenciados. Un zip inválido no crea una plantilla a medias.
+- Las plantillas viven en `templates/<plantilla>/` dentro de la carpeta de datos:
+
+```
+templates/mi-plantilla/
+  theme.yaml
+  cover.svg
+  section.svg
+  content-1c.svg
+  content-2c.svg
+  fonts/
+  example.md
+```
+
+`theme.yaml` usa las mismas claves que el tema del front matter, más `name` y `description`:
+
+```yaml
+name: Editorial
+description: Fondo crema con acentos azules
+base: light
+accent: "#2563eb"
+fonts:
+  - family: "Inter"
+    file: "fonts/Inter.woff2"
+```
+
+- `example.md` es el contenido inicial. Puede referenciar `cover.svg`, `section.svg`, `content-1c.svg` y `content-2c.svg`; al crear el proyecto se copian a `assets/` y las referencias se reescriben.
+- Las fuentes de `fonts/` se copian a `assets/fonts/` y el tema se inyecta en el front matter.
+- La presentación creada es autocontenida: mover o borrar la plantilla no la altera.
+- Exportar una plantilla genera un zip con `theme.yaml`, `example.md`, los SVG y las fuentes. Ese zip se puede importar en otro equipo.
+
 ### Markdown compatible
 
 - Títulos, listas, tablas GFM, citas, enlaces, tachado, listas de tareas.
@@ -203,10 +240,13 @@ src/
     parser.ts       separación de diapositivas, front matter y notas
     markdown.ts     renderizado y sintaxis de imágenes
     autofit.ts      cálculo del tamaño de texto por diapositiva
+    background.ts   inserción y sustitución del fondo de una diapositiva
     project.ts      lectura/escritura del ZIP .markpoint
     themes.ts       presets, validación y resolución del tema
     themeBlock.ts   escritura del bloque theme en el front matter
     themeLibrary.ts biblioteca de temas de usuario y fuentes
+    templates.ts    validación, zip y creación de proyectos desde plantillas
+    templateLibrary.ts carpetas de plantillas y alternativa en localStorage
     recovery.ts     copia de recuperación en la raíz de datos
     recent.ts       historial de archivos recientes
     export.ts       HTML autónomo y HTML de impresión

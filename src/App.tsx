@@ -37,6 +37,7 @@ import {
   pickImageFiles,
   pickProjectFile,
   pickSavePath,
+  pickZipFile,
   readFilePath,
   setWindowFullscreen,
   setWindowTitle,
@@ -61,6 +62,22 @@ import {
 } from "./lib/audience";
 import { buildPrintHtml, buildStandaloneHtml, renderDeckMarkup } from "./lib/export";
 import { translate, useT } from "./lib/i18n";
+import { setBackgroundInMarkdown, backgroundOfSlide, collectBackgrounds, removeBackgroundFromMarkdown, type DeckBackground } from "./lib/background";
+import {
+  createProjectFromTemplate,
+  decodeTemplateZip,
+  withTemplateName,
+  type TemplatePack,
+} from "./lib/templates";
+import {
+  deleteTemplate,
+  loadTemplates,
+  renameTemplate,
+  saveTemplate,
+  templateExportName,
+  templateZip,
+  uniqueTemplateName,
+} from "./lib/templateLibrary";
 import {
   familyFromFileName,
   hasThemeOverrides,
@@ -85,6 +102,8 @@ import { BusyOverlay, ToastStack, type ToastItem } from "./components/Overlays";
 import { HelpDialog } from "./components/HelpDialog";
 import { LayoutPicker } from "./components/LayoutPicker";
 import { ThemeManager } from "./components/ThemeManager";
+import { TemplateGallery } from "./components/TemplateGallery";
+import { BackgroundPicker } from "./components/BackgroundPicker";
 import { ThemeStyle } from "./components/ThemeStyle";
 import { Icon } from "./components/Icons";
 
@@ -144,6 +163,11 @@ export default function App() {
 
   const [active, setActive] = useState(0);
   const activeSlide = slides[active] ?? null;
+  const deckBackgrounds = useMemo(() => collectBackgrounds(slides), [slides]);
+  const activeBackground = useMemo(
+    () => (activeSlide ? backgroundOfSlide(activeSlide) : null),
+    [activeSlide],
+  );
   const activeRef = useRef(0);
   const originRef = useRef<"editor" | "preview" | null>(null);
   const [cursorLine, setCursorLine] = useState(1);
@@ -157,6 +181,9 @@ export default function App() {
   const [helpOpen, setHelpOpen] = useState(false);
   const [savedThemes, setSavedThemes] = useState<StoredTheme[]>([]);
   const [themeManagerOpen, setThemeManagerOpen] = useState(false);
+  const [templates, setTemplates] = useState<TemplatePack[]>([]);
+  const [templateGalleryOpen, setTemplateGalleryOpen] = useState(false);
+  const [templateBusy, setTemplateBusy] = useState(false);
 
   /**
    * Source lines that belong to the active slide. When the cursor is in the
@@ -244,6 +271,18 @@ export default function App() {
   useEffect(() => {
     void refreshThemes();
   }, [refreshThemes]);
+
+  const refreshTemplates = useCallback(async () => {
+    try {
+      setTemplates(await loadTemplates());
+    } catch {
+      setTemplates([]);
+    }
+  }, []);
+
+  useEffect(() => {
+    void refreshTemplates();
+  }, [refreshTemplates]);
 
   const themeWarningsKey = resolvedTheme.warnings.join("|");
   const shownThemeWarnings = useRef("");
@@ -654,6 +693,174 @@ export default function App() {
       );
     }
   }, [addImages, t]);
+
+  const chooseBackground = useCallback(
+    async (targetIndex?: number) => {
+      try {
+        const state = useAppStore.getState();
+        const parsed = parseDeck(state.markdown);
+        const line = editorRef.current?.getCursorLine() ?? cursorLine;
+        const index = targetIndex ?? slideAtLine(parsed.slides, line);
+        const slide = parsed.slides[index];
+        if (!slide) return;
+
+        const picked = await pickImageFiles(t("imageFilter"));
+        if (picked.length === 0) return;
+        const image = picked[0];
+        const path = state.addFile(image.name, image.bytes);
+        const edit = setBackgroundInMarkdown(state.markdown, slide, path);
+        if (!edit) return;
+        editorRef.current?.replaceRange(edit.from, edit.to, edit.insert, {
+          preserveCursor: true,
+        });
+        pushToast(t("backgroundSet", { name: image.name }), "success");
+      } catch (error) {
+        await showError(
+          t("backgroundError"),
+          error instanceof Error ? error.message : String(error),
+        );
+      }
+    },
+    [cursorLine, pushToast, t],
+  );
+
+  const insertBackground = useCallback(() => {
+    void chooseBackground();
+  }, [chooseBackground]);
+
+  const applyBackgroundToActive = useCallback((background: DeckBackground) => {
+    const state = useAppStore.getState();
+    const parsed = parseDeck(state.markdown);
+    const slide = parsed.slides[activeRef.current];
+    if (!slide) return;
+    const current = backgroundOfSlide(slide);
+    if (current && current.src === background.src && current.fit === background.fit) return;
+    const edit = setBackgroundInMarkdown(state.markdown, slide, background.src, background.fit);
+    if (!edit) return;
+    editorRef.current?.replaceRange(edit.from, edit.to, edit.insert, {
+      preserveCursor: true,
+    });
+  }, []);
+
+  const clearActiveBackground = useCallback(() => {
+    const state = useAppStore.getState();
+    const parsed = parseDeck(state.markdown);
+    const slide = parsed.slides[activeRef.current];
+    if (!slide) return;
+    if (!backgroundOfSlide(slide)) return;
+    const edit = removeBackgroundFromMarkdown(state.markdown, slide);
+    if (!edit) return;
+    editorRef.current?.replaceRange(edit.from, edit.to, edit.insert, {
+      preserveCursor: true,
+    });
+  }, []);
+
+  /* ------------------------------------------------------------- templates */
+
+  const createFromTemplate = useCallback(
+    async (pack: TemplatePack) => {
+      if (!(await confirmDiscard())) return;
+      try {
+        setTemplateBusy(true);
+        applyProject(createProjectFromTemplate(pack), null);
+        await deleteRecoveryDraft();
+        setTemplateGalleryOpen(false);
+        pushToast(t("templateCreated", { name: pack.name }), "success");
+      } catch (error) {
+        await showError(t("templateError"), error instanceof Error ? error.message : String(error));
+      } finally {
+        setTemplateBusy(false);
+      }
+    },
+    [applyProject, confirmDiscard, pushToast, t],
+  );
+
+  const importTemplate = useCallback(async () => {
+    try {
+      setTemplateBusy(true);
+      const picked = await pickZipFile(t("templateFileFilter"));
+      if (!picked) return;
+      const fallback = picked.name.replace(/\.zip$/i, "");
+      const decoded = decodeTemplateZip(picked.bytes, fallback);
+      const name = uniqueTemplateName(decoded.name, templates.map((item) => item.name));
+      const pack: TemplatePack =
+        name === decoded.name
+          ? decoded
+          : {
+              ...decoded,
+              name,
+              themeYaml: withTemplateName(decoded.themeYaml, name),
+            };
+      const id = templates.some((item) => item.id === pack.id)
+        ? `${pack.id}-${Date.now().toString(36)}`
+        : pack.id;
+      await saveTemplate({ ...pack, id });
+      await refreshTemplates();
+      pushToast(t("templateImported"), "success");
+    } catch (error) {
+      await showError(t("templateError"), error instanceof Error ? error.message : String(error));
+    } finally {
+      setTemplateBusy(false);
+    }
+  }, [pushToast, refreshTemplates, t, templates]);
+
+  const exportTemplate = useCallback(
+    async (pack: TemplatePack) => {
+      try {
+        setTemplateBusy(true);
+        const target = await pickSavePath(templateExportName(pack), t("templateFileFilter"), [
+          "zip",
+        ]);
+        if (!target) return;
+        await writeFilePath(target, templateZip(pack));
+        pushToast(t("templateExported"), "success");
+      } catch (error) {
+        await showError(t("templateError"), error instanceof Error ? error.message : String(error));
+      } finally {
+        setTemplateBusy(false);
+      }
+    },
+    [pushToast, t],
+  );
+
+  const renameTemplatePack = useCallback(
+    async (pack: TemplatePack, name: string) => {
+      try {
+        setTemplateBusy(true);
+        await renameTemplate(pack, name);
+        await refreshTemplates();
+        pushToast(t("templateRenamed"), "success");
+      } catch (error) {
+        await showError(t("templateError"), error instanceof Error ? error.message : String(error));
+      } finally {
+        setTemplateBusy(false);
+      }
+    },
+    [pushToast, refreshTemplates, t],
+  );
+
+  const removeTemplate = useCallback(
+    async (pack: TemplatePack) => {
+      const confirmed = await confirmDialog(t("templateDeleteConfirm", { name: pack.name }), {
+        title: "MarkPoint",
+        kind: "warning",
+        okLabel: t("delete"),
+        cancelLabel: t("cancel"),
+      });
+      if (!confirmed) return;
+      try {
+        setTemplateBusy(true);
+        await deleteTemplate(pack);
+        await refreshTemplates();
+        pushToast(t("templateDeleted"), "success");
+      } catch (error) {
+        await showError(t("templateError"), error instanceof Error ? error.message : String(error));
+      } finally {
+        setTemplateBusy(false);
+      }
+    },
+    [pushToast, refreshTemplates, t],
+  );
 
   /* --------------------------------------------------- autosave / recovery */
 
@@ -1244,6 +1451,10 @@ export default function App() {
         busy={Boolean(busy)}
         recent={recent}
         onNew={() => void newPresentation()}
+        onNewFromTemplate={() => {
+          void refreshTemplates();
+          setTemplateGalleryOpen(true);
+        }}
         onOpen={() => void openProject()}
         onOpenRecent={(path) => void openPath(path)}
         onRemoveRecent={(path) => setRecent(forgetRecent(path))}
@@ -1275,6 +1486,7 @@ export default function App() {
             onCursorLine={handleEditorCursor}
             onScrollLine={handleEditorScroll}
             onInsertImage={() => void insertImages()}
+            onInsertBackground={() => void insertBackground()}
           />
         </section>
 
@@ -1294,6 +1506,14 @@ export default function App() {
                 value={activeSlide?.layout ?? null}
                 invalid={Boolean(activeSlide?.layoutWarning)}
                 onChange={handleLayoutChange}
+              />
+              <BackgroundPicker
+                current={activeBackground}
+                backgrounds={deckBackgrounds}
+                resolve={resolveSrc}
+                onSelect={applyBackgroundToActive}
+                onClear={clearActiveBackground}
+                onPick={() => void chooseBackground(activeRef.current)}
               />
             </div>
             <span className="hint">{t("slideCount", { n: slides.length })}</span>
@@ -1340,6 +1560,18 @@ export default function App() {
 
       <ToastStack items={toasts} />
       {helpOpen ? <HelpDialog onClose={() => setHelpOpen(false)} /> : null}
+      {templateGalleryOpen ? (
+        <TemplateGallery
+          templates={templates}
+          busy={templateBusy}
+          onClose={() => setTemplateGalleryOpen(false)}
+          onCreate={(pack) => void createFromTemplate(pack)}
+          onImport={() => void importTemplate()}
+          onExport={(pack) => void exportTemplate(pack)}
+          onRename={renameTemplatePack}
+          onDelete={(pack) => void removeTemplate(pack)}
+        />
+      ) : null}
       {themeManagerOpen ? (
         <ThemeManager
           theme={resolvedTheme}
@@ -1358,6 +1590,7 @@ export default function App() {
         />
       ) : null}
       {busy ? <BusyOverlay label={busy} /> : null}
+      {templateBusy ? <BusyOverlay label={t("loading")} /> : null}
 
       {dragActive ? (
         <div className="drop-overlay">
