@@ -7,7 +7,13 @@ import {
   slideContentClass,
   splitHtmlBlocks,
 } from "../src/lib/markdown.ts";
-import { MIN_BODY_FONT, MIN_TITLE_FONT, fitFontSize } from "../src/lib/autofit.ts";
+import {
+  MIN_BODY_FONT,
+  MIN_TITLE_FONT,
+  SECTION_MAX_BODY_FONT,
+  SECTION_MAX_TITLE_FONT,
+  fitFontSize,
+} from "../src/lib/autofit.ts";
 
 const DECK = `---
 title: Demo
@@ -210,6 +216,11 @@ test("splitHtmlBlocks keeps nested blocks together", () => {
 test("each region has its own minimum font size", () => {
   assert.equal(MIN_TITLE_FONT, 28);
   assert.equal(MIN_BODY_FONT, 13);
+});
+
+test("section uses a larger title and a quieter body", () => {
+  assert.ok(SECTION_MAX_TITLE_FONT > 82);
+  assert.ok(SECTION_MAX_BODY_FONT < 74);
 });
 
 test("fitFontSize finds the largest size that fits", () => {

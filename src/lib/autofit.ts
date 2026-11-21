@@ -7,6 +7,10 @@ export const MIN_TITLE_FONT = 28;
 const MAX_BODY_FONT = 74;
 const MAX_TITLE_FONT = 82;
 
+/** «Sección» gives more presence to the title and calmer body text. */
+export const SECTION_MAX_TITLE_FONT = 96;
+export const SECTION_MAX_BODY_FONT = 56;
+
 /**
  * Largest size that satisfies `fits`, rounded down to a tenth of a pixel.
  * Text height is monotonic with font size, so a binary search is enough.
@@ -81,6 +85,9 @@ function fitLayout(content: HTMLElement, available: number): number {
   const body = content.querySelector<HTMLElement>(".layout-body");
   const flow = content.querySelector<HTMLElement>(".layout-flow");
   const centered = content.classList.contains("layout-centered");
+  const layout = content.dataset.layout;
+  const maxTitle = layout === "section" ? SECTION_MAX_TITLE_FONT : MAX_TITLE_FONT;
+  const maxBody = layout === "section" ? SECTION_MAX_BODY_FONT : MAX_BODY_FONT;
   const hasTitle = Boolean(title && title.textContent?.trim());
 
   if (title && hasTitle) {
@@ -95,11 +102,11 @@ function fitLayout(content: HTMLElement, available: number): number {
     // larger zone size, so it never drops below 28 px.
     const minTitleSize = MIN_TITLE_FONT / Math.max(titleScale, 0.01);
     const budget = available * 0.5;
-    const size = fitFontSize(minTitleSize, MAX_TITLE_FONT, (value) => {
+    const size = fitFontSize(minTitleSize, maxTitle, (value) => {
       title.style.fontSize = `${value}px`;
       return blockHeight(title) <= budget + 0.5;
     });
-    applyFontSize(title, size, minTitleSize, MAX_TITLE_FONT);
+    applyFontSize(title, size, minTitleSize, maxTitle);
   }
 
   if (!body || !flow) return 0;
@@ -114,11 +121,11 @@ function fitLayout(content: HTMLElement, available: number): number {
   // Images inside the body must fit the body, not the whole slide.
   flow.style.setProperty("--slide-content-height", `${bodyAvailable}px`);
 
-  const size = fitFontSize(MIN_BODY_FONT, MAX_BODY_FONT, (value) => {
+  const size = fitFontSize(MIN_BODY_FONT, maxBody, (value) => {
     flow.style.fontSize = `${value}px`;
     return blockHeight(flow) <= bodyAvailable + 0.5;
   });
-  applyFontSize(flow, size, MIN_BODY_FONT, MAX_BODY_FONT);
+  applyFontSize(flow, size, MIN_BODY_FONT, maxBody);
   body.dataset.fit = flow.dataset.fit;
   content.dataset.fit = flow.dataset.fit;
   return size;
