@@ -15,6 +15,7 @@ interface ToolbarProps {
   theme: ResolvedTheme;
   savedThemes: StoredTheme[];
   onNew: () => void;
+  onNewFromTemplate: () => void;
   onOpen: () => void;
   onOpenRecent: (path: string) => void;
   onRemoveRecent: (path: string) => void;
@@ -35,6 +36,7 @@ export function Toolbar({
   theme,
   savedThemes,
   onNew,
+  onNewFromTemplate,
   onOpen,
   onOpenRecent,
   onRemoveRecent,
@@ -124,6 +126,15 @@ export function Toolbar({
       <div className="toolbar-group">
         <button className="btn icon" onClick={onNew} title={t("newPresentation")} disabled={busy}>
           <Icon name="file-plus" />
+        </button>
+        <button
+          className="btn icon"
+          onClick={onNewFromTemplate}
+          title={t("newFromTemplate")}
+          aria-label={t("newFromTemplate")}
+          disabled={busy}
+        >
+          <Icon name="template" />
         </button>
         <button className="btn icon" onClick={onOpen} title={t("open")} disabled={busy}>
           <Icon name="folder-open" />

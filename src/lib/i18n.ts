@@ -7,6 +7,7 @@ type Dict = Record<string, string>;
 const es: Dict = {
   appName: "MarkPoint",
   newPresentation: "Nueva presentación",
+  newFromTemplate: "Nuevo desde plantilla…",
   open: "Abrir",
   save: "Guardar",
   saveAs: "Guardar como…",
@@ -213,6 +214,7 @@ const es: Dict = {
   exportSuccess: "Exportación completada",
   contextMenu: "Menú contextual del editor",
   contextInsertImage: "Insertar imagen…",
+  contextInsertBackground: "Fondo…",
   contextBold: "Negrita",
   contextItalic: "Cursiva",
   contextHeading: "Título",
@@ -221,6 +223,38 @@ const es: Dict = {
   contextHeading3: "Título 3",
   imageFilter: "Imágenes",
   imagePickError: "No se pudieron añadir las imágenes",
+  backgroundSet: "Fondo actualizado: {name}",
+  backgroundError: "No se pudo cambiar el fondo",
+  templateGallery: "Nuevo desde plantilla",
+  templateGalleryDesc:
+    "Crea una presentación con tema, fondos y diapositivas de ejemplo listos para editar.",
+  templateEmpty: "No hay plantillas disponibles. Importa una desde un archivo zip.",
+  templateCreate: "Crear presentación",
+  templateImport: "Importar zip…",
+  templateImportHint:
+    "El zip debe contener theme.yaml, example.md, los SVG de los diseños y, si los hay, las fuentes.",
+  templateFileFilter: "Plantilla de MarkPoint",
+  templateExport: "Exportar plantilla",
+  templateDelete: "Eliminar plantilla",
+  templateExported: "Plantilla exportada",
+  templateImported: "Plantilla importada",
+  templateRenamed: "Plantilla renombrada",
+  templateDeleted: "Plantilla eliminada",
+  templateDeleteConfirm:
+    "¿Eliminar la plantilla «{name}»? Las presentaciones creadas con ella no cambian.",
+  templateError: "No se pudo actualizar la plantilla",
+  templateCreated: "Presentación creada desde «{name}»",
+  templateNoPreview: "Sin miniatura",
+  templateNoDescription: "Sin descripción",
+  helpTemplatesTitle: "Fondos y plantillas",
+  helpTemplatesDesc:
+    "Puedes cambiar el fondo de una diapositiva o empezar desde una plantilla completa.",
+  helpTemplatesBackground:
+    "Copia una imagen a assets y la pone como fondo de la diapositiva activa.",
+  helpTemplatesGallery:
+    "Abre la galería de plantillas; incluye una de ejemplo y permite importar archivos zip.",
+  helpTemplatesNote:
+    "Una presentación creada desde una plantilla no depende de ella: el tema, los fondos y las fuentes se copian al proyecto.",
   help: "Ayuda",
   helpTooltip: "Ayuda y sintaxis",
   helpSubtitle: "Sintaxis esencial del editor",
@@ -286,6 +320,7 @@ const es: Dict = {
 const en: Dict = {
   appName: "MarkPoint",
   newPresentation: "New presentation",
+  newFromTemplate: "New from template…",
   open: "Open",
   save: "Save",
   saveAs: "Save as…",
@@ -492,6 +527,7 @@ const en: Dict = {
   exportSuccess: "Export complete",
   contextMenu: "Editor context menu",
   contextInsertImage: "Insert image…",
+  contextInsertBackground: "Background…",
   contextBold: "Bold",
   contextItalic: "Italic",
   contextHeading: "Heading",
@@ -500,6 +536,38 @@ const en: Dict = {
   contextHeading3: "Heading 3",
   imageFilter: "Images",
   imagePickError: "Could not add the images",
+  backgroundSet: "Background updated: {name}",
+  backgroundError: "The background could not be changed",
+  templateGallery: "New from template",
+  templateGalleryDesc:
+    "Create a presentation with a theme, backgrounds and example slides ready to edit.",
+  templateEmpty: "No templates available. Import one from a zip file.",
+  templateCreate: "Create presentation",
+  templateImport: "Import zip…",
+  templateImportHint:
+    "The zip must contain theme.yaml, example.md, the layout SVGs and any fonts.",
+  templateFileFilter: "MarkPoint template",
+  templateExport: "Export template",
+  templateDelete: "Delete template",
+  templateExported: "Template exported",
+  templateImported: "Template imported",
+  templateRenamed: "Template renamed",
+  templateDeleted: "Template deleted",
+  templateDeleteConfirm:
+    "Delete the template “{name}”? Presentations created with it do not change.",
+  templateError: "The template could not be updated",
+  templateCreated: "Presentation created from “{name}”",
+  templateNoPreview: "No preview",
+  templateNoDescription: "No description",
+  helpTemplatesTitle: "Backgrounds and templates",
+  helpTemplatesDesc:
+    "You can change a slide background or start from a complete template.",
+  helpTemplatesBackground:
+    "Copies an image to assets and uses it as the active slide background.",
+  helpTemplatesGallery:
+    "Opens the template gallery; it includes an example and can import zip files.",
+  helpTemplatesNote:
+    "A presentation created from a template does not depend on it: theme, backgrounds and fonts are copied into the project.",
   help: "Help",
   helpTooltip: "Help and syntax",
   helpSubtitle: "Essential editor syntax",

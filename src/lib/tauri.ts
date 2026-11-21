@@ -126,6 +126,22 @@ export async function pickThemeFile(filterName = "MarkPoint theme"): Promise<Pic
   return { path: null, name: file.name, bytes: new Uint8Array(await file.arrayBuffer()) };
 }
 
+export async function pickZipFile(filterName = "ZIP"): Promise<PickedFile | null> {
+  if (isDesktop) {
+    const selected = await openDialog({
+      multiple: false,
+      directory: false,
+      filters: [{ name: filterName, extensions: ["zip"] }],
+    });
+    if (typeof selected !== "string") return null;
+    return { path: selected, name: basename(selected), bytes: await readFile(selected) };
+  }
+
+  const [file] = await pickInBrowser(".zip,application/zip");
+  if (!file) return null;
+  return { path: null, name: file.name, bytes: new Uint8Array(await file.arrayBuffer()) };
+}
+
 export async function readFilePath(path: string): Promise<Uint8Array> {
   if (isDesktop) return readFile(path);
   throw new Error("Reading a path is only available in the desktop app");
