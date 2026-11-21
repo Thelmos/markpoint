@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import type { ProjectData, ThemeSpec } from "./types";
+import type { ProjectData, SlideLayout, ThemeSpec } from "./types";
 import { useAppStore } from "./store";
 import { deckTitle, lineForSlide, parseDeck, slideAtLine } from "./lib/parser";
 import { normalizeAssetPath } from "./lib/markdown";
@@ -69,6 +69,7 @@ import {
   stackWithFamily,
 } from "./lib/themes";
 import { setThemeInMarkdown, themeBlockLines } from "./lib/themeBlock";
+import { setLayoutInMarkdown } from "./lib/slideLayout";
 import {
   applyStoredTheme,
   loadThemes,
@@ -82,6 +83,7 @@ import { Presentation } from "./components/Presentation";
 import { Presenter } from "./components/Presenter";
 import { BusyOverlay, ToastStack, type ToastItem } from "./components/Overlays";
 import { HelpDialog } from "./components/HelpDialog";
+import { LayoutPicker } from "./components/LayoutPicker";
 import { ThemeManager } from "./components/ThemeManager";
 import { ThemeStyle } from "./components/ThemeStyle";
 import { Icon } from "./components/Icons";
@@ -127,8 +129,21 @@ export default function App() {
     [deck.frontMatter.theme],
   );
   const firstSlideLine = slides[0]?.startLine ?? 1;
+  const layoutWarningKey = useMemo(
+    () =>
+      slides
+        .map((slide) => slide.layoutWarning)
+        .filter((value): value is string => Boolean(value))
+        .join("|"),
+    [slides],
+  );
+  const firstLayoutWarning = useMemo(
+    () => slides.find((slide) => slide.layoutWarning)?.layoutWarning ?? "",
+    [slides],
+  );
 
   const [active, setActive] = useState(0);
+  const activeSlide = slides[active] ?? null;
   const activeRef = useRef(0);
   const originRef = useRef<"editor" | "preview" | null>(null);
   const [cursorLine, setCursorLine] = useState(1);
@@ -237,6 +252,17 @@ export default function App() {
     shownThemeWarnings.current = themeWarningsKey;
     pushToast(t("themeInvalid"), "error");
   }, [themeWarningsKey, pushToast, t]);
+
+  const shownLayoutWarnings = useRef("");
+  useEffect(() => {
+    if (!layoutWarningKey) {
+      shownLayoutWarnings.current = "";
+      return;
+    }
+    if (layoutWarningKey === shownLayoutWarnings.current) return;
+    shownLayoutWarnings.current = layoutWarningKey;
+    pushToast(t("layoutUnknown", { name: firstLayoutWarning }), "error");
+  }, [layoutWarningKey, firstLayoutWarning, pushToast, t]);
 
   const confirmThemeReplace = useCallback(async () => {
     const raw = parseDeck(useAppStore.getState().markdown).frontMatter.theme;
@@ -396,6 +422,19 @@ export default function App() {
     },
     [slides],
   );
+
+  const handleLayoutChange = useCallback((layout: SlideLayout | null) => {
+    const state = useAppStore.getState();
+    const parsed = parseDeck(state.markdown);
+    const slide = parsed.slides[activeRef.current];
+    if (!slide) return;
+    const edit = setLayoutInMarkdown(state.markdown, slide, layout);
+    if (!edit) return;
+    // A targeted transaction: it keeps the undo history and the cursor.
+    editorRef.current?.replaceRange(edit.from, edit.to, edit.insert, {
+      preserveCursor: true,
+    });
+  }, []);
 
   useEffect(() => {
     if (active > slides.length - 1) {
@@ -1250,7 +1289,14 @@ export default function App() {
         <section className="pane preview-pane" style={{ flex: 1 }}>
           <div className="pane-header">
             <span>{t("preview")}</span>
-            <span className="hint">{t("slideCount", { n: slides.length })}</span>
+            <div className="pane-header-tools">
+              <LayoutPicker
+                value={activeSlide?.layout ?? null}
+                invalid={Boolean(activeSlide?.layoutWarning)}
+                onChange={handleLayoutChange}
+              />
+              <span className="hint">{t("slideCount", { n: slides.length })}</span>
+            </div>
           </div>
           <PreviewPane
             ref={previewRef}

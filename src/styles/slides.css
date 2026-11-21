@@ -504,6 +504,147 @@
   width: 100%;
 }
 
+/* ------------------------------------------------------------ layouts */
+
+/* Optional layouts split the slide into a title zone and a body zone. The
+   default rendering (no directive) never uses these rules. */
+.slide-content.slide-has-layout {
+  --layout-gap: 0.55em;
+  --layout-title-height: auto;
+  display: flex;
+  flex-direction: column;
+}
+
+.slide-content.slide-has-layout .layout-stack {
+  position: relative;
+  z-index: 1;
+  display: flex;
+  flex-direction: column;
+  gap: var(--layout-gap);
+  flex: 1;
+  width: 100%;
+  min-height: 0;
+}
+
+/* The title gets a fixed band, so a long heading never steals room from the
+   body and the body type never depends on the title. */
+.slide-content.slide-has-layout .layout-title {
+  flex: 0 0 var(--layout-title-height, auto);
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: flex-start;
+  height: var(--layout-title-height, auto);
+  max-width: 100%;
+  min-height: 0;
+  overflow: hidden;
+}
+
+.slide-content.layout-centered {
+  text-align: center;
+}
+
+.slide-content.layout-centered .layout-title {
+  align-items: center;
+}
+
+/* The zone controls the size, so every heading level behaves as a title. */
+.slide-content.slide-has-layout .layout-title > h1,
+.slide-content.slide-has-layout .layout-title > h2,
+.slide-content.slide-has-layout .layout-title > h3,
+.slide-content.slide-has-layout .layout-title > h4,
+.slide-content.slide-has-layout .layout-title > h5,
+.slide-content.slide-has-layout .layout-title > h6 {
+  margin: 0;
+  font-size: 1em;
+  line-height: 1.1;
+}
+
+.slide-content.slide-has-layout .layout-title > :first-child {
+  margin-top: 0 !important;
+}
+
+.slide-content.slide-has-layout .layout-title > :last-child {
+  margin-bottom: 0 !important;
+}
+
+.slide-content.layout-centered .layout-title h1::after {
+  margin-left: auto;
+  margin-right: auto;
+}
+
+.slide-content.slide-has-layout .layout-body {
+  flex: 1 1 auto;
+  min-height: 0;
+  width: 100%;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-start;
+}
+
+.slide-content.layout-centered .layout-body {
+  justify-content: center;
+  align-items: center;
+}
+
+.slide-content.slide-has-layout .layout-flow {
+  flex: 0 0 auto;
+  width: 100%;
+  min-height: 0;
+  overflow-wrap: break-word;
+  hyphens: auto;
+}
+
+.slide-content.layout-centered .layout-flow {
+  text-align: center;
+}
+
+/* Centred layouts keep list markers attached to their items. */
+.slide-content.layout-centered .layout-flow :is(ul, ol) {
+  display: inline-block;
+  text-align: left;
+}
+
+.slide-content.slide-has-layout .layout-flow > :first-child {
+  margin-top: 0 !important;
+}
+
+.slide-content.slide-has-layout .layout-flow > :last-child {
+  margin-bottom: 0 !important;
+}
+
+/* Two columns without a marker: the body flows and balances automatically. */
+.slide-content.slide-has-layout .layout-flow-2c {
+  column-count: 2;
+  column-gap: 2.4em;
+}
+
+/* A column is narrower than the slide: keep images inside it. */
+.slide-content .layout-flow-2c .slide-img {
+  max-width: 100%;
+}
+
+/* Floats cannot span columns; a block inside one column keeps the layout
+   readable instead of pushing the text into an overflowing column. */
+.slide-content .layout-flow-2c .slide-img-left,
+.slide-content .layout-flow-2c .slide-img-right {
+  float: none;
+  display: block;
+  margin-top: 0;
+  margin-bottom: 0.6em;
+}
+
+.slide-content .layout-flow-2c .slide-img-left {
+  margin-right: auto;
+  margin-left: 0;
+}
+
+.slide-content .layout-flow-2c .slide-img-right {
+  margin-right: 0;
+  margin-left: auto;
+}
+
 .slide-number {
   position: absolute;
   right: 38px;

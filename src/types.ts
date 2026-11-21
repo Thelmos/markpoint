@@ -1,6 +1,9 @@
 export type Lang = "es" | "en";
 export type ImageFit = "cover" | "contain";
 
+/** Slide layouts that can be selected with a `<!-- layout: ... -->` directive. */
+export type SlideLayout = "cover" | "section" | "content-1c" | "content-2c";
+
 export interface ThemeSyntax {
   keyword: string;
   string: string;
@@ -84,7 +87,7 @@ export interface BackgroundImage {
 
 export interface Slide {
   index: number;
-  /** Markdown content without the notes comment. */
+  /** Markdown content without the notes comment or the layout directive. */
   markdown: string;
   /** 1-based line where the slide content starts. */
   startLine: number;
@@ -93,6 +96,12 @@ export interface Slide {
   /** 1-based line of the `---` separator that precedes the slide, or null. */
   separatorLine: number | null;
   notes: string;
+  /** Layout selected by the directive, or null for the default rendering. */
+  layout: SlideLayout | null;
+  /** Raw value of an unknown layout directive, so the UI can warn about it. */
+  layoutWarning: string | null;
+  /** 1-based line of the layout directive, whether it is valid or not. */
+  layoutLine: number | null;
   /** True when the slide has no content at all. */
   empty: boolean;
 }
@@ -125,4 +134,6 @@ export interface SlideRender {
   backgrounds: BackgroundImage[];
   /** True when the content is split into a leading title and a body block. */
   hasBody: boolean;
+  /** Layout applied to the slide, or null for the default rendering. */
+  layout: SlideLayout | null;
 }

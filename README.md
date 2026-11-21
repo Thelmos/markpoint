@@ -98,6 +98,32 @@ La posición se define en el **texto alternativo** de la imagen, de modo que el 
 - El fondo lleva un velo automático según el tema para mantener la legibilidad del texto.
 - Al guardar se eliminan del `.markpoint` las imágenes que ya no se referencian en el Markdown, para liberar espacio. Se conservan en memoria durante la sesión.
 
+### Diseños de diapositiva
+
+La primera línea no vacía de una diapositiva puede elegir un diseño con un comentario:
+
+```markdown
+<!-- layout: cover -->
+
+# Título de la portada
+
+Subtítulo de la presentación
+```
+
+| Directiva | Resultado |
+| --- | --- |
+| `cover` | Portada: título y subtítulo centrados |
+| `section` | Sección: título y texto centrados |
+| `content-1c` | Contenido en una columna: título arriba y cuerpo debajo |
+| `content-2c` | Contenido en dos columnas: el cuerpo se reparte solo |
+
+- Sin directiva, la diapositiva se renderiza como antes: los diseños son opcionales.
+- El título es el primer encabezado de la diapositiva y el cuerpo es el resto.
+- Título y cuerpo se autoajustan por separado, con mínimos de 28 px y 13 px; la escala de uno no depende de la longitud del otro.
+- El selector **Diseño** de la cabecera de la vista previa escribe, cambia o quita la directiva de la diapositiva activa.
+- Una directiva desconocida se ignora y se avisa, sin romper el render.
+- En `content-2c`, las imágenes `![left]` y `![right]` siguen funcionando y quedan dentro de una columna.
+
 ### Markdown compatible
 
 - Títulos, listas, tablas GFM, citas, enlaces, tachado, listas de tareas.
