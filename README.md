@@ -119,10 +119,11 @@ Subtítulo de la presentación
 
 - Sin directiva, la diapositiva se renderiza como antes: los diseños son opcionales.
 - El título es el primer encabezado de la diapositiva y el cuerpo es el resto.
-- Título y cuerpo se autoajustan por separado, con mínimos de 28 px y 13 px; la escala de uno no depende de la longitud del otro.
+- El título empieza en el margen superior, como en «Sin diseño», y el cuerpo usa el espacio que queda debajo.
+- Título y cuerpo se autoajustan por separado, con mínimos de 28 px y 13 px.
 - El selector **Diseño** de la cabecera de la vista previa escribe, cambia o quita la directiva de la diapositiva activa.
 - Una directiva desconocida se ignora y se avisa, sin romper el render.
-- En `content-2c`, las imágenes `![left]` y `![right]` siguen funcionando y quedan dentro de una columna.
+- En `content-2c`, el texto y las listas se equilibran entre las dos columnas cuando no hay nada más. Si hay una imagen, un diagrama Mermaid o un bloque de código, todo el texto va a una columna y los elementos especiales a la otra; el orden en Markdown decide el lado (texto primero → texto a la izquierda).
 
 ### Markdown compatible
 

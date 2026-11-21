@@ -14,6 +14,8 @@ interface RenderEnv {
   backgrounds: BackgroundImage[];
   floats: string[];
   resolve: SrcResolver;
+  /** Keeps floated images in place so the two-column split can respect order. */
+  floatsInPlace: boolean;
   [key: string]: unknown;
 }
 
@@ -83,10 +85,13 @@ md.renderer.rules.image = (tokens, idx, options, env, self) => {
 
   if (spec.kind === "center") return sized;
 
-  // Left/right images float. Hoisting them to the top of the content (see
-  // renderSlideMarkdown) lets the following text wrap around them and keep
-  // flowing below, instead of being pushed past the image.
+  // Left/right images float. Outside layouts, hoisting them to the top of the
+  // content lets the following text wrap around them. In the two-column layout
+  // they stay in place so their order chooses the column.
   renderEnv.floats.push(sized);
+  if (renderEnv.floatsInPlace) {
+    return `<!--mp-float:${renderEnv.floats.length - 1}-->`;
+  }
   return `<span class="layout-marker" aria-hidden="true"></span>`;
 };
 
@@ -108,14 +113,22 @@ export function renderSlideMarkdown(
   resolve: SrcResolver,
   layout: SlideLayout | null = null,
 ): SlideRender {
-  const env: RenderEnv = { backgrounds: [], floats: [], resolve };
+  const env: RenderEnv = {
+    backgrounds: [],
+    floats: [],
+    resolve,
+    floatsInPlace: layout === "content-2c",
+  };
   let html = md.render(markdown, env as unknown as Record<string, unknown>);
   html = html.replace(/<p>\s*<span class="layout-marker"[^>]*><\/span>\s*<\/p>/g, "");
   html = html.replace(/<p>\s*<\/p>/g, "");
   html = html.replace(/<span class="layout-marker"[^>]*><\/span>/g, "");
 
   if (layout) {
-    const rendered = renderLayoutZones(html, env.floats, layout);
+    if (env.floatsInPlace) {
+      html = replaceFloatPlaceholders(html, env.floats);
+    }
+    const rendered = renderLayoutZones(html, env.floatsInPlace ? [] : env.floats, layout);
     return { ...rendered, backgrounds: env.backgrounds, layout };
   }
 
@@ -135,6 +148,168 @@ export function renderSlideMarkdown(
   return { html, backgrounds: env.backgrounds, hasBody: false, layout: null };
 }
 
+const VOID_TAGS = new Set([
+  "area",
+  "base",
+  "br",
+  "col",
+  "embed",
+  "hr",
+  "img",
+  "input",
+  "link",
+  "meta",
+  "param",
+  "source",
+  "track",
+  "wbr",
+]);
+
+/** End offset of the element that starts at `start`, or -1 if unbalanced. */
+function findElementEnd(html: string, start: number, name: string): number {
+  if (VOID_TAGS.has(name)) {
+    const end = html.indexOf(">", start);
+    return end === -1 ? html.length : end + 1;
+  }
+
+  let depth = 0;
+  let cursor = start;
+  while (cursor < html.length) {
+    const open = html.indexOf("<", cursor);
+    if (open === -1) return -1;
+
+    if (html.startsWith("<!--", open)) {
+      const end = html.indexOf("-->", open + 4);
+      if (end === -1) return -1;
+      cursor = end + 3;
+      continue;
+    }
+
+    if (html[open + 1] === "/") {
+      const close = /^<\/\s*([a-zA-Z][\w:-]*)\s*>/.exec(html.slice(open));
+      if (!close) {
+        cursor = open + 1;
+        continue;
+      }
+      if (close[1].toLowerCase() === name) {
+        depth -= 1;
+        if (depth === 0) return open + close[0].length;
+      }
+      cursor = open + close[0].length;
+      continue;
+    }
+
+    const tag = /^<([a-zA-Z][\w:-]*)\b[^>]*>/.exec(html.slice(open));
+    if (!tag) {
+      cursor = open + 1;
+      continue;
+    }
+    const tagName = tag[1].toLowerCase();
+    const selfClosing = tag[0].endsWith("/>") || VOID_TAGS.has(tagName);
+    if (tagName === name && !selfClosing) depth += 1;
+    cursor = open + tag[0].length;
+  }
+  return -1;
+}
+
+/** Splits rendered HTML into its top-level blocks, preserving their order. */
+export function splitHtmlBlocks(html: string): string[] {
+  const blocks: string[] = [];
+  let cursor = 0;
+
+  while (cursor < html.length) {
+    while (cursor < html.length && /\s/.test(html[cursor])) cursor += 1;
+    if (cursor >= html.length) break;
+
+    if (html.startsWith("<!--", cursor)) {
+      const end = html.indexOf("-->", cursor + 4);
+      const stop = end === -1 ? html.length : end + 3;
+      blocks.push(html.slice(cursor, stop).trim());
+      cursor = stop;
+      continue;
+    }
+
+    if (html[cursor] !== "<") {
+      const next = html.indexOf("<", cursor + 1);
+      const stop = next === -1 ? html.length : next;
+      const block = html.slice(cursor, stop).trim();
+      if (block) blocks.push(block);
+      cursor = stop;
+      continue;
+    }
+
+    const open = /^<([a-zA-Z][\w:-]*)/.exec(html.slice(cursor));
+    if (!open) {
+      blocks.push(html.slice(cursor).trim());
+      break;
+    }
+
+    const name = open[1].toLowerCase();
+    const end = findElementEnd(html, cursor, name);
+    if (end === -1) {
+      blocks.push(html.slice(cursor).trim());
+      break;
+    }
+    const block = html.slice(cursor, end).trim();
+    if (block) blocks.push(block);
+    cursor = end;
+  }
+
+  return blocks;
+}
+
+/** Puts floated images back where they appeared in the Markdown. */
+function replaceFloatPlaceholders(html: string, floats: string[]): string {
+  return html
+    .replace(
+      /<p>\s*<!--mp-float:(\d+)-->\s*<\/p>/g,
+      (_match, index: string) => floats[Number(index)] ?? "",
+    )
+    .replace(
+      /<!--mp-float:(\d+)-->/g,
+      (_match, index: string) => floats[Number(index)] ?? "",
+    );
+}
+
+/** Images, diagrams and code blocks get their own column. */
+function isSpecialBlock(block: string): boolean {
+  if (/mermaid-block/.test(block)) return true;
+  if (/^<pre\b/i.test(block)) return true;
+  if (/^<img\b/i.test(block)) return true;
+  return /^<p\b[^>]*>\s*(?:<a\b[^>]*>\s*)?<img\b[^>]*>(?:\s*<\/a>)?\s*<\/p>$/i.test(
+    block,
+  );
+}
+
+/**
+ * Pure text and lists are balanced by CSS columns. With a special block, all
+ * the text before it goes to one column and the special block plus the rest to
+ * the other, so the Markdown order chooses the side.
+ */
+function renderTwoColumnBody(body: string): string {
+  const blocks = splitHtmlBlocks(body);
+  const specials = blocks.filter(isSpecialBlock);
+  const texts = blocks.filter((block) => !isSpecialBlock(block));
+
+  if (specials.length === 0) {
+    return `<div class="layout-flow layout-flow-2c layout-flow-balanced">${blocks.join("")}</div>`;
+  }
+
+  if (texts.length === 0) {
+    return `<div class="layout-flow layout-flow-2c">${blocks.join("")}</div>`;
+  }
+
+  // The side is chosen by the first block: special left / text right when the
+  // special comes first, or text left / special right otherwise.
+  const specialFirst = isSpecialBlock(blocks[0]);
+  const left = specialFirst ? specials : texts;
+  const right = specialFirst ? texts : specials;
+
+  return `<div class="layout-flow layout-flow-2c"><div class="layout-columns"><div class="layout-col">${left.join(
+    "",
+  )}</div><div class="layout-col">${right.join("")}</div></div></div>`;
+}
+
 /**
  * Splits the rendered markdown into a title zone and a body zone. The first
  * heading is the title; everything else is the body. Floating images join the
@@ -151,10 +326,12 @@ function renderLayoutZones(
   if (floats.length > 0) body = `${floats.join("")}${body}`;
 
   const titleBlock = title ? `<div class="layout-title">${title}</div>` : "";
-  const flowClass =
-    layout === "content-2c" ? "layout-flow layout-flow-2c" : "layout-flow";
   const bodyBlock = body.trim()
-    ? `<div class="layout-body"><div class="${flowClass}">${body}</div></div>`
+    ? `<div class="layout-body">${
+        layout === "content-2c"
+          ? renderTwoColumnBody(body)
+          : `<div class="layout-flow">${body}</div>`
+      }</div>`
     : "";
   return {
     html: `<div class="layout-stack">${titleBlock}${bodyBlock}</div>`,

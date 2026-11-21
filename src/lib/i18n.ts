@@ -254,7 +254,8 @@ const es: Dict = {
   helpLayoutCover: "Portada: título y subtítulo centrados.",
   helpLayoutSection: "Sección: título y texto centrados.",
   helpLayoutContent1c: "Contenido en una columna: título arriba y cuerpo debajo.",
-  helpLayoutContent2c: "Contenido en dos columnas: el cuerpo se reparte solo, sin marcador.",
+  helpLayoutContent2c:
+    "Contenido en dos columnas: el texto se equilibra o comparte columna con los elementos especiales.",
   layout: "Diseño",
   layoutTooltip: "Diseño de la diapositiva activa",
   layoutNone: "Sin diseño",
@@ -532,7 +533,8 @@ const en: Dict = {
   helpLayoutCover: "Cover: title and subtitle centred.",
   helpLayoutSection: "Section: title and text centred.",
   helpLayoutContent1c: "One-column content: title on top, body below.",
-  helpLayoutContent2c: "Two-column content: the body flows on its own, without a marker.",
+  helpLayoutContent2c:
+    "Two-column content: text balances itself or shares a column with special elements.",
   layout: "Layout",
   layoutTooltip: "Layout of the active slide",
   layoutNone: "No layout",

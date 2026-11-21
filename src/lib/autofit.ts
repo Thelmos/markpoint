@@ -73,36 +73,34 @@ export function fitSlide(slide: HTMLElement | null): number {
 }
 
 /**
- * Fits both zones of a layout. The title gets a fixed band, so neither region
- * depends on the length of the other one.
+ * Fits both zones of a layout. The title starts at the top margin and the
+ * body uses the space that is left below it.
  */
 function fitLayout(content: HTMLElement, available: number): number {
   const title = content.querySelector<HTMLElement>(".layout-title");
   const body = content.querySelector<HTMLElement>(".layout-body");
   const flow = content.querySelector<HTMLElement>(".layout-flow");
   const centered = content.classList.contains("layout-centered");
-  const hasBody = Boolean(body && flow);
   const hasTitle = Boolean(title && title.textContent?.trim());
 
-  // Without a body the title may use the whole slide; otherwise it keeps a
-  // fixed share that the body can rely on.
-  const titleBudget = !hasBody ? available : available * (centered ? 0.44 : 0.32);
-  content.style.setProperty(
-    "--layout-title-height",
-    hasTitle || hasBody ? `${titleBudget}px` : "auto",
-  );
-
   if (title && hasTitle) {
+    const budget = available * 0.5;
     const size = fitFontSize(MIN_TITLE_FONT, MAX_TITLE_FONT, (value) => {
       title.style.fontSize = `${value}px`;
-      return blockHeight(title) <= titleBudget + 0.5;
+      return blockHeight(title) <= budget + 0.5;
     });
     applyFontSize(title, size, MIN_TITLE_FONT, MAX_TITLE_FONT);
   }
 
   if (!body || !flow) return 0;
 
-  const bodyAvailable = Math.max(0, body.clientHeight);
+  let bodyAvailable = body.clientHeight;
+  if (centered) {
+    const stack = content.querySelector<HTMLElement>(".layout-stack");
+    const gap = stack ? Number.parseFloat(getComputedStyle(stack).rowGap) || 0 : 0;
+    bodyAvailable = available - (title?.offsetHeight ?? 0) - gap;
+  }
+  bodyAvailable = Math.max(0, bodyAvailable);
   // Images inside the body must fit the body, not the whole slide.
   flow.style.setProperty("--slide-content-height", `${bodyAvailable}px`);
 

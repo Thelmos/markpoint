@@ -1288,15 +1288,15 @@ export default function App() {
 
         <section className="pane preview-pane" style={{ flex: 1 }}>
           <div className="pane-header">
-            <span>{t("preview")}</span>
+            <span className="pane-title">{t("preview")}</span>
             <div className="pane-header-tools">
               <LayoutPicker
                 value={activeSlide?.layout ?? null}
                 invalid={Boolean(activeSlide?.layoutWarning)}
                 onChange={handleLayoutChange}
               />
-              <span className="hint">{t("slideCount", { n: slides.length })}</span>
             </div>
+            <span className="hint">{t("slideCount", { n: slides.length })}</span>
           </div>
           <PreviewPane
             ref={previewRef}

@@ -510,7 +510,6 @@
    default rendering (no directive) never uses these rules. */
 .slide-content.slide-has-layout {
   --layout-gap: 0.55em;
-  --layout-title-height: auto;
   display: flex;
   flex-direction: column;
 }
@@ -526,15 +525,13 @@
   min-height: 0;
 }
 
-/* The title gets a fixed band, so a long heading never steals room from the
-   body and the body type never depends on the title. */
+/* The title sits at the top margin and the body continues right below it. */
 .slide-content.slide-has-layout .layout-title {
-  flex: 0 0 var(--layout-title-height, auto);
+  flex: 0 0 auto;
   display: flex;
   flex-direction: column;
-  justify-content: center;
+  justify-content: flex-start;
   align-items: flex-start;
-  height: var(--layout-title-height, auto);
   max-width: 100%;
   min-height: 0;
   overflow: hidden;
@@ -542,6 +539,12 @@
 
 .slide-content.layout-centered {
   text-align: center;
+}
+
+.slide-content.layout-centered .layout-stack {
+  flex: 0 1 auto;
+  max-height: 100%;
+  justify-content: center;
 }
 
 .slide-content.layout-centered .layout-title {
@@ -584,6 +587,7 @@
 }
 
 .slide-content.layout-centered .layout-body {
+  flex: 0 1 auto;
   justify-content: center;
   align-items: center;
 }
@@ -614,10 +618,30 @@
   margin-bottom: 0 !important;
 }
 
-/* Two columns without a marker: the body flows and balances automatically. */
-.slide-content.slide-has-layout .layout-flow-2c {
+/* Text and lists balance automatically in two CSS columns. */
+.slide-content.slide-has-layout .layout-flow-2c.layout-flow-balanced {
   column-count: 2;
   column-gap: 2.4em;
+}
+
+/* With an image, diagram or code block, each group gets its own column. */
+.slide-content.slide-has-layout .layout-columns {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+  gap: 2.4em;
+  align-items: start;
+}
+
+.slide-content.slide-has-layout .layout-col {
+  min-width: 0;
+}
+
+.slide-content.slide-has-layout .layout-col > :first-child {
+  margin-top: 0 !important;
+}
+
+.slide-content.slide-has-layout .layout-col > :last-child {
+  margin-bottom: 0 !important;
 }
 
 /* A column is narrower than the slide: keep images inside it. */

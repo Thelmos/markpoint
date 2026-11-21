@@ -2,7 +2,11 @@ import { test } from "node:test";
 import assert from "node:assert/strict";
 import { parseDeck } from "../src/lib/parser.ts";
 import { setLayoutInMarkdown } from "../src/lib/slideLayout.ts";
-import { renderSlideMarkdown, slideContentClass } from "../src/lib/markdown.ts";
+import {
+  renderSlideMarkdown,
+  slideContentClass,
+  splitHtmlBlocks,
+} from "../src/lib/markdown.ts";
 import { MIN_BODY_FONT, MIN_TITLE_FONT, fitFontSize } from "../src/lib/autofit.ts";
 
 const DECK = `---
@@ -122,6 +126,84 @@ test("floating images join the body of a two-column slide", () => {
   const image = render.html.indexOf("slide-img-left");
   assert.ok(image > render.html.indexOf("layout-title"));
   assert.ok(image < render.html.indexOf("Texto que envuelve"));
+});
+
+test("text-only two-column slides keep the balanced CSS columns", () => {
+  const render = renderSlideMarkdown(
+    "# Título\n\nPrimer párrafo\n\nSegundo párrafo",
+    (src) => src,
+    "content-2c",
+  );
+  assert.match(render.html, /layout-flow-2c layout-flow-balanced/);
+  assert.doesNotMatch(render.html, /layout-columns/);
+});
+
+test("text before an image goes left and the image goes right", () => {
+  const render = renderSlideMarkdown(
+    "# Título\n\nTexto de la izquierda\n\n![right](foto.png)\n\nTexto de la derecha",
+    (src) => src,
+    "content-2c",
+  );
+  assert.match(
+    render.html,
+    /<div class="layout-col"><p>Texto de la izquierda<\/p>\s*<p>Texto de la derecha<\/p><\/div><div class="layout-col"><img[^>]*slide-img-right/,
+  );
+});
+
+test("all text before the first special block shares the left column", () => {
+  const render = renderSlideMarkdown(
+    "# Título\n\nPrimero\n\nSegundo\n\n![left](foto.png)",
+    (src) => src,
+    "content-2c",
+  );
+  assert.match(
+    render.html,
+    /<div class="layout-col"><p>Primero<\/p>\s*<p>Segundo<\/p><\/div><div class="layout-col"><img/,
+  );
+});
+
+test("an image first chooses the left column and the text goes right", () => {
+  const render = renderSlideMarkdown(
+    "# Título\n\n![left](foto.png)\n\nTexto a la derecha",
+    (src) => src,
+    "content-2c",
+  );
+  assert.match(
+    render.html,
+    /<div class="layout-col"><img[^>]*slide-img-left[^>]*><\/div><div class="layout-col"><p>Texto a la derecha/,
+  );
+});
+
+test("code blocks and diagrams also get their own column", () => {
+  const code = renderSlideMarkdown(
+    "# Título\n\nIntroducción\n\n```ts\nconst a = 1;\n```",
+    (src) => src,
+    "content-2c",
+  );
+  assert.match(
+    code.html,
+    /<div class="layout-col"><p>Introducción<\/p><\/div><div class="layout-col"><pre/,
+  );
+
+  const mermaid = renderSlideMarkdown(
+    "# Título\n\nIntroducción\n\n```mermaid\nflowchart LR\n  A --> B\n```",
+    (src) => src,
+    "content-2c",
+  );
+  assert.match(
+    mermaid.html,
+    /<div class="layout-col"><p>Introducción<\/p><\/div><div class="layout-col"><div class="mermaid-block"/,
+  );
+});
+
+test("splitHtmlBlocks keeps nested blocks together", () => {
+  const blocks = splitHtmlBlocks(
+    '<p>Uno</p>\n<ul><li>A</li><li>B</li></ul>\n<pre><code>x</code></pre>\n<div class="mermaid-block"><span>x</span></div>',
+  );
+  assert.equal(blocks.length, 4);
+  assert.match(blocks[1], /^<ul>/);
+  assert.match(blocks[2], /^<pre>/);
+  assert.match(blocks[3], /^<div class="mermaid-block">/);
 });
 
 test("each region has its own minimum font size", () => {
