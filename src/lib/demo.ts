@@ -59,7 +59,7 @@ paginate: true
 theme: light
 ---
 
-<!-- layout: cover -->
+<!-- layout: section -->
 
 ![bg](assets/background.svg)
 

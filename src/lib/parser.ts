@@ -5,7 +5,7 @@ const SEPARATOR = /^ {0,3}-{3,}[ \t]*$/;
 const NOTES = /<!--\s*notes:\s*([\s\S]*?)-->/gi;
 const LAYOUT_DIRECTIVE = /^\s*<!--\s*layout\s*:\s*([^>]*?)\s*-->\s*$/i;
 
-const LAYOUTS: SlideLayout[] = ["cover", "section", "content-1c", "content-2c"];
+const LAYOUTS: SlideLayout[] = ["section", "content-1c", "content-2c"];
 
 /** Normalizes the directive value: `content_1c` and `Content-1C` are valid. */
 export function parseLayoutId(value: string): SlideLayout | null {

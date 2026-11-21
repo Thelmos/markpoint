@@ -344,7 +344,7 @@ export function slideContentClass(render: SlideRender): string {
   if (!render.layout) {
     return render.hasBody ? "slide-content has-body" : "slide-content";
   }
-  const centered = render.layout === "cover" || render.layout === "section";
+  const centered = render.layout === "section";
   return `slide-content slide-has-layout${centered ? " layout-centered" : ""}`;
 }
 

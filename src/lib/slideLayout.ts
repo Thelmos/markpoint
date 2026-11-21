@@ -1,7 +1,7 @@
 import type { Slide, SlideLayout } from "../types";
 
 /** Layouts in the order shown by the selector. */
-export const SLIDE_LAYOUTS: SlideLayout[] = ["cover", "section", "content-1c", "content-2c"];
+export const SLIDE_LAYOUTS: SlideLayout[] = ["section", "content-1c", "content-2c"];
 
 export interface LayoutEdit {
   from: number;

@@ -3,7 +3,6 @@ import { SLIDE_LAYOUTS } from "../lib/slideLayout";
 import { useT } from "../lib/i18n";
 
 const LABEL_KEYS: Record<SlideLayout, string> = {
-  cover: "layoutCover",
   section: "layoutSection",
   "content-1c": "layoutContent1c",
   "content-2c": "layoutContent2c",

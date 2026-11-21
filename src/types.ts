@@ -2,7 +2,7 @@ export type Lang = "es" | "en";
 export type ImageFit = "cover" | "contain";
 
 /** Slide layouts that can be selected with a `<!-- layout: ... -->` directive. */
-export type SlideLayout = "cover" | "section" | "content-1c" | "content-2c";
+export type SlideLayout = "section" | "content-1c" | "content-2c";
 
 export interface ThemeSyntax {
   keyword: string;

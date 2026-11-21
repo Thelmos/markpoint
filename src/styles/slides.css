@@ -538,18 +538,16 @@
   overflow: hidden;
 }
 
+/* «Sección» centres the title/body group vertically, but keeps the text
+   left-aligned so the Markdown controls the type sizes. */
 .slide-content.layout-centered {
-  text-align: center;
+  justify-content: center;
 }
 
 .slide-content.layout-centered .layout-stack {
   flex: 0 1 auto;
   max-height: 100%;
   justify-content: center;
-}
-
-.slide-content.layout-centered .layout-title {
-  align-items: center;
 }
 
 /* The zone controls the fit, but each heading level keeps its own size. */
@@ -595,11 +593,6 @@
   margin-bottom: 0 !important;
 }
 
-.slide-content.layout-centered .layout-title h1::after {
-  margin-left: auto;
-  margin-right: auto;
-}
-
 .slide-content.slide-has-layout .layout-body {
   flex: 1 1 auto;
   min-height: 0;
@@ -612,8 +605,6 @@
 
 .slide-content.layout-centered .layout-body {
   flex: 0 1 auto;
-  justify-content: center;
-  align-items: center;
 }
 
 .slide-content.slide-has-layout .layout-flow {
@@ -622,16 +613,6 @@
   min-height: 0;
   overflow-wrap: break-word;
   hyphens: auto;
-}
-
-.slide-content.layout-centered .layout-flow {
-  text-align: center;
-}
-
-/* Centred layouts keep list markers attached to their items. */
-.slide-content.layout-centered .layout-flow :is(ul, ol) {
-  display: inline-block;
-  text-align: left;
 }
 
 .slide-content.slide-has-layout .layout-flow > :first-child {

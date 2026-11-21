@@ -97,10 +97,6 @@ export function HelpDialog({ onClose }: { onClose: () => void }) {
             </pre>
             <ul className="help-syntax-list">
               <li>
-                <code>cover</code>
-                <span>{t("helpLayoutCover")}</span>
-              </li>
-              <li>
                 <code>section</code>
                 <span>{t("helpLayoutSection")}</span>
               </li>

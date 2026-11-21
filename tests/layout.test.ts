@@ -13,7 +13,7 @@ const DECK = `---
 title: Demo
 ---
 
-<!-- layout: cover -->
+<!-- layout: section -->
 
 # Hola
 
@@ -22,7 +22,7 @@ Sub
 
 test("the layout directive is extracted and the slide lines stay intact", () => {
   const slide = parseDeck(DECK).slides[0];
-  assert.equal(slide.layout, "cover");
+  assert.equal(slide.layout, "section");
   assert.equal(slide.layoutWarning, null);
   assert.equal(slide.layoutLine, 5);
   assert.equal(slide.startLine, 5);
@@ -39,10 +39,10 @@ test("an unknown layout is ignored but remembered for a warning", () => {
 });
 
 test("only the first non-empty line is a directive", () => {
-  const slide = parseDeck("# Hola\n\n<!-- layout: cover -->\n").slides[0];
+  const slide = parseDeck("# Hola\n\n<!-- layout: section -->\n").slides[0];
   assert.equal(slide.layout, null);
   assert.equal(slide.layoutWarning, null);
-  assert.match(slide.markdown, /<!-- layout: cover -->/);
+  assert.match(slide.markdown, /<!-- layout: section -->/);
 });
 
 test("layout ids are normalized", () => {
@@ -101,12 +101,13 @@ test("content layouts split the first heading into the title zone", () => {
   assert.doesNotMatch(slideContentClass(render), /layout-centered/);
 });
 
-test("cover and section center both zones", () => {
-  for (const layout of ["cover", "section"] as const) {
-    const render = renderSlideMarkdown("# Título\n\nSub", (src) => src, layout);
-    assert.match(slideContentClass(render), /layout-centered/);
-    assert.match(render.html, /class="layout-title"/);
-  }
+test("section centers the block vertically and content layouts do not", () => {
+  const section = renderSlideMarkdown("# Título\n\nTexto", (src) => src, "section");
+  assert.match(slideContentClass(section), /layout-centered/);
+  assert.match(section.html, /class="layout-title"/);
+
+  const content = renderSlideMarkdown("# Título\n\nTexto", (src) => src, "content-1c");
+  assert.doesNotMatch(slideContentClass(content), /layout-centered/);
 });
 
 test("without a directive the rendering is unchanged", () => {
