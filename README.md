@@ -129,6 +129,7 @@ Texto de apoyo de la sección
 ### Fondos y plantillas
 
 - **Fondo…** (menú contextual del editor, bajo **Insertar imagen…**) copia una imagen al proyecto y la usa como fondo de la diapositiva activa. Sustituye el fondo anterior y mantiene la directiva de diseño en la primera línea.
+- El selector **Fondo** de la cabecera de la vista previa, junto a **Diseño**, permite reutilizar cualquier fondo de la presentación en la diapositiva activa, quitarlo o elegir una imagen nueva.
 - **Nuevo desde plantilla…** abre la galería. Cada tarjeta muestra la miniatura, el nombre, la descripción y las diapositivas de ejemplo; desde ahí se puede crear la presentación, exportar, renombrar o eliminar la plantilla.
 - La galería incluye una plantilla de ejemplo. Se guarda una sola vez en la carpeta de datos y, a partir de ahí, se comporta como cualquier otra.
 - Importar un zip valida todo antes de escribir nada: rutas relativas, sin `..`, límites de tamaño, archivos permitidos y recursos referenciados. Un zip inválido no crea una plantilla a medias.

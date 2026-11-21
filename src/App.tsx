@@ -62,7 +62,7 @@ import {
 } from "./lib/audience";
 import { buildPrintHtml, buildStandaloneHtml, renderDeckMarkup } from "./lib/export";
 import { translate, useT } from "./lib/i18n";
-import { setBackgroundInMarkdown } from "./lib/background";
+import { setBackgroundInMarkdown, backgroundOfSlide, collectBackgrounds, removeBackgroundFromMarkdown, type DeckBackground } from "./lib/background";
 import {
   createProjectFromTemplate,
   decodeTemplateZip,
@@ -103,6 +103,7 @@ import { HelpDialog } from "./components/HelpDialog";
 import { LayoutPicker } from "./components/LayoutPicker";
 import { ThemeManager } from "./components/ThemeManager";
 import { TemplateGallery } from "./components/TemplateGallery";
+import { BackgroundPicker } from "./components/BackgroundPicker";
 import { ThemeStyle } from "./components/ThemeStyle";
 import { Icon } from "./components/Icons";
 
@@ -162,6 +163,11 @@ export default function App() {
 
   const [active, setActive] = useState(0);
   const activeSlide = slides[active] ?? null;
+  const deckBackgrounds = useMemo(() => collectBackgrounds(slides), [slides]);
+  const activeBackground = useMemo(
+    () => (activeSlide ? backgroundOfSlide(activeSlide) : null),
+    [activeSlide],
+  );
   const activeRef = useRef(0);
   const originRef = useRef<"editor" | "preview" | null>(null);
   const [cursorLine, setCursorLine] = useState(1);
@@ -688,28 +694,66 @@ export default function App() {
     }
   }, [addImages, t]);
 
-  const insertBackground = useCallback(async () => {
-    try {
-      const state = useAppStore.getState();
-      const parsed = parseDeck(state.markdown);
-      const line = editorRef.current?.getCursorLine() ?? cursorLine;
-      const slide = parsed.slides[slideAtLine(parsed.slides, line)];
-      if (!slide) return;
+  const chooseBackground = useCallback(
+    async (targetIndex?: number) => {
+      try {
+        const state = useAppStore.getState();
+        const parsed = parseDeck(state.markdown);
+        const line = editorRef.current?.getCursorLine() ?? cursorLine;
+        const index = targetIndex ?? slideAtLine(parsed.slides, line);
+        const slide = parsed.slides[index];
+        if (!slide) return;
 
-      const picked = await pickImageFiles(t("imageFilter"));
-      if (picked.length === 0) return;
-      const image = picked[0];
-      const path = state.addFile(image.name, image.bytes);
-      const edit = setBackgroundInMarkdown(state.markdown, slide, path);
-      if (!edit) return;
-      editorRef.current?.replaceRange(edit.from, edit.to, edit.insert, {
-        preserveCursor: true,
-      });
-      pushToast(t("backgroundSet", { name: image.name }), "success");
-    } catch (error) {
-      await showError(t("backgroundError"), error instanceof Error ? error.message : String(error));
-    }
-  }, [cursorLine, pushToast, t]);
+        const picked = await pickImageFiles(t("imageFilter"));
+        if (picked.length === 0) return;
+        const image = picked[0];
+        const path = state.addFile(image.name, image.bytes);
+        const edit = setBackgroundInMarkdown(state.markdown, slide, path);
+        if (!edit) return;
+        editorRef.current?.replaceRange(edit.from, edit.to, edit.insert, {
+          preserveCursor: true,
+        });
+        pushToast(t("backgroundSet", { name: image.name }), "success");
+      } catch (error) {
+        await showError(
+          t("backgroundError"),
+          error instanceof Error ? error.message : String(error),
+        );
+      }
+    },
+    [cursorLine, pushToast, t],
+  );
+
+  const insertBackground = useCallback(() => {
+    void chooseBackground();
+  }, [chooseBackground]);
+
+  const applyBackgroundToActive = useCallback((background: DeckBackground) => {
+    const state = useAppStore.getState();
+    const parsed = parseDeck(state.markdown);
+    const slide = parsed.slides[activeRef.current];
+    if (!slide) return;
+    const current = backgroundOfSlide(slide);
+    if (current && current.src === background.src && current.fit === background.fit) return;
+    const edit = setBackgroundInMarkdown(state.markdown, slide, background.src, background.fit);
+    if (!edit) return;
+    editorRef.current?.replaceRange(edit.from, edit.to, edit.insert, {
+      preserveCursor: true,
+    });
+  }, []);
+
+  const clearActiveBackground = useCallback(() => {
+    const state = useAppStore.getState();
+    const parsed = parseDeck(state.markdown);
+    const slide = parsed.slides[activeRef.current];
+    if (!slide) return;
+    if (!backgroundOfSlide(slide)) return;
+    const edit = removeBackgroundFromMarkdown(state.markdown, slide);
+    if (!edit) return;
+    editorRef.current?.replaceRange(edit.from, edit.to, edit.insert, {
+      preserveCursor: true,
+    });
+  }, []);
 
   /* ------------------------------------------------------------- templates */
 
@@ -1462,6 +1506,14 @@ export default function App() {
                 value={activeSlide?.layout ?? null}
                 invalid={Boolean(activeSlide?.layoutWarning)}
                 onChange={handleLayoutChange}
+              />
+              <BackgroundPicker
+                current={activeBackground}
+                backgrounds={deckBackgrounds}
+                resolve={resolveSrc}
+                onSelect={applyBackgroundToActive}
+                onClear={clearActiveBackground}
+                onPick={() => void chooseBackground(activeRef.current)}
               />
             </div>
             <span className="hint">{t("slideCount", { n: slides.length })}</span>

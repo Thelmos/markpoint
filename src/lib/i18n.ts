@@ -224,6 +224,16 @@ const es: Dict = {
   imageFilter: "Imágenes",
   imagePickError: "No se pudieron añadir las imágenes",
   backgroundSet: "Fondo actualizado: {name}",
+  background: "Fondo",
+  backgroundTooltip: "Fondo de la diapositiva activa",
+  backgroundNone: "Sin fondo",
+  backgroundRemove: "Quitar fondo",
+  backgroundPick: "Elegir imagen…",
+  backgroundPickDesc: "Copiar una imagen al proyecto",
+  backgroundEmpty: "No hay fondos en la presentación",
+  backgroundInline: "Imagen incrustada",
+  backgroundCover: "Cubrir",
+  backgroundContain: "Ajustar",
   backgroundError: "No se pudo cambiar el fondo",
   templateGallery: "Nuevo desde plantilla",
   templateGalleryDesc:
@@ -250,7 +260,7 @@ const es: Dict = {
   helpTemplatesDesc:
     "Puedes cambiar el fondo de una diapositiva o empezar desde una plantilla completa.",
   helpTemplatesBackground:
-    "Copia una imagen a assets y la pone como fondo de la diapositiva activa.",
+    "Copia una imagen a assets y la pone como fondo de la diapositiva activa. También puedes reutilizar cualquier fondo de la presentación desde el selector Fondo.",
   helpTemplatesGallery:
     "Abre la galería de plantillas; incluye una de ejemplo y permite importar archivos zip.",
   helpTemplatesNote:
@@ -537,6 +547,16 @@ const en: Dict = {
   imageFilter: "Images",
   imagePickError: "Could not add the images",
   backgroundSet: "Background updated: {name}",
+  background: "Background",
+  backgroundTooltip: "Active slide background",
+  backgroundNone: "No background",
+  backgroundRemove: "Remove background",
+  backgroundPick: "Choose image…",
+  backgroundPickDesc: "Copy an image into the project",
+  backgroundEmpty: "No backgrounds in this presentation",
+  backgroundInline: "Embedded image",
+  backgroundCover: "Cover",
+  backgroundContain: "Contain",
   backgroundError: "The background could not be changed",
   templateGallery: "New from template",
   templateGalleryDesc:
@@ -563,7 +583,7 @@ const en: Dict = {
   helpTemplatesDesc:
     "You can change a slide background or start from a complete template.",
   helpTemplatesBackground:
-    "Copies an image to assets and uses it as the active slide background.",
+    "Copies an image to assets and uses it as the active slide background. You can also reuse any background in the presentation from the Background selector.",
   helpTemplatesGallery:
     "Opens the template gallery; it includes an example and can import zip files.",
   helpTemplatesNote:
