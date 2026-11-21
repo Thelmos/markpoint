@@ -280,7 +280,7 @@ export async function saveTemplate(pack: TemplatePack): Promise<void> {
 export async function deleteTemplate(pack: TemplatePack): Promise<void> {
   const directory = await templatesDirectory();
   if (directory) {
-    await remove(await join(directory, pack.id), { recursive: true }).catch(() => undefined);
+    await remove(await join(directory, pack.id), { recursive: true });
     return;
   }
   saveBrowserRecords(loadBrowserRecords().filter((record) => record.id !== pack.id));
