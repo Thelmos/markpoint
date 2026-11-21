@@ -534,6 +534,7 @@
   align-items: flex-start;
   max-width: 100%;
   min-height: 0;
+  padding-bottom: 0.08em;
   overflow: hidden;
 }
 
@@ -559,12 +560,11 @@
 .slide-content.slide-has-layout .layout-title > h5,
 .slide-content.slide-has-layout .layout-title > h6 {
   margin: 0;
-  line-height: 1.1;
+  line-height: 1.2;
 }
 
 .slide-content.slide-has-layout .layout-title > h1 {
   font-size: 1em;
-  line-height: 1.2;
 }
 
 /* The layout title is smaller than the default one, so the decorative line
